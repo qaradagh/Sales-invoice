@@ -290,6 +290,33 @@
     updateScale();
   }
 
+  /* ───────────────── نام فایل خروجی ───────────────── */
+
+  /**
+   * «شماره_تاریخ_خریدار» — مثلاً 0042_1405.05.08_احمدی
+   * شماره با صفر پر می‌شود تا مرتب‌سازی حروفی در پوشه با ترتیب عددی یکی شود
+   * (وگرنه فاکتور ۱۰۰ قبل از ۲ می‌آید) و ارقام لاتین‌اند تا همه‌جا درست بچینند.
+   */
+  function fileLabel() {
+    var parts = [];
+
+    var number = Fa.safeFileText(Fa.toLatinDigits(state.invoice.number));
+    if (number) parts.push(/^\d+$/.test(number) ? number.padStart(4, '0') : number);
+
+    var d = state.invoice.date;
+    var y = Fa.parseNum(d.y), m = Fa.parseNum(d.m), day = Fa.parseNum(d.d);
+    if (Jalali.isValid(y, m, day)) {
+      parts.push(y + '.' + String(m).padStart(2, '0') + '.' + String(day).padStart(2, '0'));
+    }
+
+    var buyer = Fa.safeFileText(state.buyer.name).slice(0, 40).trim();
+    if (buyer) parts.push(buyer);
+
+    return parts.length ? parts.join('_') : 'فاکتور';
+  }
+
+  window.Invoice = { fileLabel: fileLabel };
+
   function money(label, value, cls) {
     return '<div class="trow ' + (cls || '') + '">' +
       '<span class="trow__label">' + label + '</span>' +
@@ -511,7 +538,7 @@
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = Fa.fileLabel(state.invoice.number) + '.json';
+    a.download = fileLabel() + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

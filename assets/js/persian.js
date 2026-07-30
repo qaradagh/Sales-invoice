@@ -90,15 +90,17 @@
     return (neg ? 'منفی ' : '') + words.join(' و ');
   }
 
-  /** نام فایل خروجی، مثلاً «فاکتور۷۶» */
-  function fileLabel(number) {
-    var digits = toFaDigits(toLatinDigits(number).trim());
-    var clean = digits.replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, ' ').trim();
-    return 'فاکتور' + clean;
+  /** حذف نویسه‌هایی که در نام فایل مجاز نیستند */
+  function safeFileText(input) {
+    return String(input == null ? '' : input)
+      .replace(/[\\/:*?"<>|]/g, '')
+      .replace(/[\u0000-\u001f\u007f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   global.Fa = {
-    fileLabel: fileLabel,
+    safeFileText: safeFileText,
     toFaDigits: toFaDigits,
     toLatinDigits: toLatinDigits,
     parseNum: parseNum,
