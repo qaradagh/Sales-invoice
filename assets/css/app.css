@@ -77,6 +77,10 @@ html[data-theme="dark"] {
 
 * { box-sizing: border-box; }
 
+/* اعلام پشتیبانی بومی از تم تیره تا مرورگر رنگ‌ها را خودش وارونه نکند */
+:root { color-scheme: light; }
+html[data-theme="dark"] { color-scheme: dark; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -734,26 +738,55 @@ html[data-theme="dark"] .item__total b { color: var(--brand-3); }
 
 /* ─────────────────────────── چاپ ─────────────────────────── */
 
-@page { size: A4; margin: 0; }
+/* حاشیه واقعی صفحه — مرورگرهای موبایل و آی‌پد margin: 0 را نادیده می‌گیرند
+   و حاشیه خودشان را اعمال می‌کنند؛ با تعیین حاشیه واقعی، خروجی همه‌جا یکسان می‌ماند */
+@page { size: A4 portrait; margin: 12mm; }
 
 @media print {
-  html, body { background: #fff !important; }
+  /* جلوگیری از تیره‌کردن خودکار صفحه توسط مرورگر موبایل هنگام چاپ */
+  :root, html[data-theme="dark"] { color-scheme: light; }
+
+  html, body {
+    background: #fff !important;
+    color: #16211b !important;
+  }
+
   .no-print, .topbar { display: none !important; }
   .layout { display: block; }
-  .preview { padding: 0; background: #fff; min-height: 0; }
+
+  .preview {
+    position: static;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    padding: 0;
+    background: #fff;
+  }
+
   .preview__stage { width: auto; height: auto; margin: 0; }
+
+  /* برگه دیگر ارتفاع ثابت ۲۹۷ میلی‌متری ندارد؛ ارتفاع ثابت به‌علاوهٔ حاشیهٔ
+     پیش‌فرض مرورگر باعث سرریز چند میلی‌متری و ایجاد صفحه دوم خالی می‌شد */
   .sheet {
     position: static;
     transform: none;
-    width: 210mm;
-    min-height: 297mm;
+    width: 100%;
+    max-width: 100%;
+    min-height: 230mm;
+    height: auto;
+    padding: 5mm 0 0;
     border-radius: 0;
     box-shadow: none;
-    padding: 12mm 12mm 10mm;
-    break-inside: avoid;
+    overflow: visible;
   }
+
+  .sheet__sign { padding-top: 6mm; }
+  .signbox { height: 20mm; }
+  .sheet__footline { margin-top: 4mm; padding-top: 2mm; }
+
   .itable thead { display: table-header-group; }
   .itable tbody tr { break-inside: avoid; }
+
   *, *::before, *::after {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
