@@ -92,15 +92,20 @@
             <span class="field__label">آدرس</span>
             <textarea rows="2" data-path="buyer.address" placeholder="آدرس خریدار"></textarea>
           </label>
-          <div class="grid grid--2">
-            <label class="field">
-              <span class="field__label">شماره تماس</span>
-              <input type="text" inputmode="tel" data-path="buyer.phone" placeholder="۰۹۱۲۰۰۰۰۰۰۰" />
-            </label>
-            <label class="field">
-              <span class="field__label">کد اقتصادی / ملی</span>
-              <input type="text" inputmode="numeric" data-path="buyer.nationalId" placeholder="اختیاری" />
-            </label>
+          <label class="field">
+            <span class="field__label">شماره تماس</span>
+            <input type="text" inputmode="tel" data-path="buyer.phone" placeholder="۰۹۱۲۰۰۰۰۰۰۰" />
+          </label>
+          <div class="field">
+            <span class="field__label">کد اقتصادی / ملی</span>
+            <div class="split">
+              <input type="text" inputmode="numeric" data-path="buyer.nationalId" placeholder="اختیاری" aria-label="شماره کد" />
+              <select data-path="buyer.idType" class="split__unit" aria-label="نوع کد">
+                <option value="economic">کد اقتصادی</option>
+                <option value="national">کد ملی</option>
+              </select>
+            </div>
+            <span class="field__hint">نوع کد را انتخاب کنید تا در فاکتور با همان عنوان چاپ شود</span>
           </div>
         </div>
       </section>
@@ -255,7 +260,7 @@
               <p class="party__name" data-out="buyer.name"></p>
               <p class="party__line" data-row="buyer.address"><span class="lbl">آدرس:</span> <span data-out="buyer.address"></span></p>
               <p class="party__line" data-row="buyer.phone"><span class="lbl">تماس:</span> <span data-out="buyer.phone"></span></p>
-              <p class="party__line" data-row="buyer.nationalId"><span class="lbl">کد اقتصادی:</span> <span data-out="buyer.nationalId"></span></p>
+              <p class="party__line" data-row="buyer.nationalId"><span class="lbl" id="outIdLabel">کد اقتصادی:</span> <span data-out="buyer.nationalId"></span></p>
             </div>
           </div>
           <div class="party party--seller">

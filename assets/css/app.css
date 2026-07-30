@@ -311,7 +311,7 @@ select {
 
 .split { display: flex; gap: 6px; }
 .split > input { flex: 1; min-width: 0; }
-.split__unit { width: 105px; flex: none; }
+.split__unit { width: 128px; flex: none; }
 
 .switch { display: flex; align-items: center; gap: 9px; font-size: .85rem; cursor: pointer; }
 .switch input {

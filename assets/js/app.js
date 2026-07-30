@@ -15,7 +15,7 @@
     return {
       seller: {
         name: 'شیلان ستور گستر',
-        tagline: 'تولید و عرضه خوراک تخمیری دام و طیور',
+        tagline: 'تولید و عرضه خوراک تخمیری دام',
         phone: '',
         address: '',
         regNo: '3628',
@@ -23,7 +23,7 @@
         account: '0119715069004',
         bank: 'بانک صادرات ایران'
       },
-      buyer: { name: '', address: '', phone: '', nationalId: '' },
+      buyer: { name: '', address: '', phone: '', idType: 'economic', nationalId: '' },
       invoice: {
         number: '1',
         currency: 'ریال',
@@ -210,6 +210,7 @@
       'buyer.address', 'buyer.phone', 'buyer.nationalId'].forEach(bindText);
 
     setOut('buyer.name', String(state.buyer.name || '').trim() || 'خریدار محترم');
+    $('#outIdLabel').textContent = state.buyer.idType === 'national' ? 'کد ملی:' : 'کد اقتصادی:';
     setOut('invoice.number', Fa.toFaDigits(String(state.invoice.number || '').trim() || '—'));
     setOut('invoice.dateText', dateText());
 
