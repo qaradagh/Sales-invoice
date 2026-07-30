@@ -149,8 +149,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn:active { transform: translateY(1px); }
 .btn:focus-visible { outline: 2px solid var(--brand-2); outline-offset: 2px; }
 
+/* background-origin پیش‌فرض padding-box است و گرادیان در نوار یک‌پیکسلی
+   حاشیه تکرار می‌شود؛ نتیجه‌اش خط تیره یا روشن دور دکمه بود */
 .btn--primary {
   background: var(--brand-grad);
+  background-origin: border-box;
   border-color: transparent;
   color: #fff;
   box-shadow: 0 6px 18px rgba(0, 101, 46, .28);
@@ -211,6 +214,121 @@ html[data-theme="dark"] .btn--dashed { color: var(--brand-3); }
 
 .btn.is-busy { opacity: .65; cursor: progress; }
 .btn:disabled { pointer-events: none; }
+
+/* ─────────────────────────── پنجره راهنما ─────────────────────────── */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal[hidden] { display: none; }
+
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 20, 15, .55);
+  backdrop-filter: blur(3px);
+  animation: fade .2s ease;
+}
+
+.modal__card {
+  position: relative;
+  width: min(460px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 22px 20px 20px;
+  animation: pop .22s cubic-bezier(.2, .9, .3, 1.2);
+}
+
+@keyframes fade { from { opacity: 0; } }
+@keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.97); } }
+
+.modal__close {
+  position: absolute;
+  inset-block-start: 12px;
+  inset-inline-start: 12px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.modal__close:hover { background: var(--field); color: var(--ink); }
+.modal__close svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+
+.modal__title { margin: 0 0 8px; font-size: 1.05rem; font-weight: 800; }
+.modal__lead { margin: 0 0 14px; font-size: .85rem; color: var(--ink-2); line-height: 1.8; }
+.modal__lead b { color: var(--brand); }
+html[data-theme="dark"] .modal__lead b { color: var(--brand-3); }
+
+.modal__action { width: 100%; justify-content: center; margin-bottom: 16px; }
+.modal__action .btn__label { display: inline; }
+
+.modal__hint { margin: 0 0 8px; font-size: .78rem; font-weight: 700; color: var(--ink-2); }
+
+.modal__note {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: .74rem;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.guide { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.guide__item {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  background: var(--field);
+}
+
+.guide__item.is-current {
+  border-color: var(--brand-2);
+  background: color-mix(in srgb, var(--brand-2) 10%, transparent);
+}
+
+.guide__name { display: block; font-size: .82rem; font-weight: 700; margin-bottom: 3px; }
+.guide__item.is-current .guide__name::after {
+  content: 'مرورگر شما';
+  margin-inline-start: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--brand-2);
+  color: #fff;
+  font-size: .64rem;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+
+.guide__steps { display: block; font-size: .78rem; color: var(--ink-2); line-height: 1.8; }
+.guide__steps b { color: var(--ink); }
+
+.guide__icon {
+  width: 13px;
+  height: 13px;
+  vertical-align: -2px;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 /* ─────────────────────────── چیدمان ─────────────────────────── */
 
@@ -776,6 +894,12 @@ html[data-theme="dark"] .item__total b { color: var(--brand-3); }
   /* روی گوشی نوار بالا چسبان نیست تا دو ردیف دکمه، صفحه را اشغال نکند */
   .topbar { position: static; padding: 10px 12px; gap: 8px; }
   .topbar__title { font-size: .95rem; }
+
+  /* لوگو به لبه چپ می‌رود، مثل سربرگ خود فاکتور */
+  .topbar__brand {
+    flex-direction: row-reverse;
+    margin-inline-start: auto;
+  }
   .topbar__actions { width: 100%; gap: 6px; }
   .btn { padding: 8px 10px; }
   .ico { width: 16px; height: 16px; }
