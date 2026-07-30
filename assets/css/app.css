@@ -443,6 +443,7 @@ html[data-theme="dark"] .item__total b { color: var(--brand-3); }
 /* سربرگ */
 .sheet__top {
   display: flex;
+  flex-direction: row-reverse;
   align-items: flex-start;
   justify-content: space-between;
   gap: 10mm;
@@ -450,9 +451,18 @@ html[data-theme="dark"] .item__total b { color: var(--brand-3); }
   border-bottom: 1px solid #e8ede9;
 }
 
-.sheet__brand { display: flex; align-items: center; gap: 4mm; min-width: 0; }
+/* لوگو در لبه چپ برگه می‌نشیند و عنوان فاکتور در لبه راست */
+.sheet__brand {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 4mm;
+  min-width: 0;
+}
 
 .sheet__logo { width: 13mm; height: 26mm; object-fit: contain; object-position: top; flex: none; }
+
+.sheet__brandtext { text-align: left; }
 
 .sheet__company { margin: 0; font-size: 16pt; font-weight: 800; letter-spacing: -.02em; color: #12351f; }
 .sheet__tagline { margin: 1mm 0 0; font-size: 8.5pt; color: #7c8a83; }
