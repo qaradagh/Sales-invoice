@@ -691,22 +691,42 @@ html[data-theme="dark"] .item__total b { color: var(--brand-3); }
 /* امضاها */
 .sheet__sign {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 5mm;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4mm;
   margin-top: auto;
   padding-top: 8mm;
 }
 
+.sheet__sign--two { grid-template-columns: repeat(2, 1fr); }
+
 .signbox {
   border: 1px dashed #d3ded6;
   border-radius: 3mm;
-  height: 24mm;
+  min-height: 24mm;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 2mm;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2mm 3mm 2mm;
   font-size: 8.5pt;
   color: #90a096;
+  text-align: center;
+}
+
+/* جای نوشتن نام تحویل‌گیرنده، با خط‌چین برای نوشتن */
+.signbox__name {
+  width: 100%;
+  margin-top: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 2mm;
+  font-size: 7.5pt;
+}
+
+.signbox__name::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px dotted #cfdad2;
 }
 
 .sheet__footline {
@@ -812,7 +832,7 @@ html[data-theme="dark"] .item__total b { color: var(--brand-3); }
   }
 
   .sheet__sign { padding-top: 6mm; }
-  .signbox { height: 20mm; }
+  .signbox { min-height: 20mm; }
   .sheet__footline { margin-top: 4mm; padding-top: 2mm; }
 
   .itable thead { display: table-header-group; }
