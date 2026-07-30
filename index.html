@@ -234,6 +234,10 @@
             <span>نمایش کادر مهر و امضا</span>
           </label>
           <label class="switch">
+            <input type="checkbox" data-path="options.showReceiver" />
+            <span>نمایش کادر تحویل‌گیرنده</span>
+          </label>
+          <label class="switch">
             <input type="checkbox" data-path="options.showBank" />
             <span>نمایش اطلاعات بانکی</span>
           </label>
@@ -326,6 +330,10 @@
         <footer class="sheet__sign" id="outSign">
           <div class="signbox"><span>مهر و امضای فروشنده</span></div>
           <div class="signbox"><span>مهر و امضای خریدار</span></div>
+          <div class="signbox" id="outReceiver">
+            <span>نام و امضای تحویل‌گیرنده</span>
+            <span class="signbox__name">نام:</span>
+          </div>
         </footer>
 
         <div class="sheet__footline">

@@ -32,7 +32,7 @@
       items: [{ desc: 'خوراک تخمیری', qty: '', price: '' }],
       totals: { prevBalance: '', discountType: 'amount', discountValue: '', vatPercent: '', paid: '' },
       notes: '',
-      options: { showWords: true, showStamp: true, showBank: true }
+      options: { showWords: true, showStamp: true, showReceiver: true, showBank: true }
     };
   }
 
@@ -285,7 +285,10 @@
     $('#outBankBox').style.display = (state.options.showBank && hasBank) ? '' : 'none';
 
     /* امضا */
-    $('#outSign').style.display = state.options.showStamp ? '' : 'none';
+    var sign = $('#outSign');
+    sign.style.display = state.options.showStamp ? '' : 'none';
+    $('#outReceiver').style.display = state.options.showReceiver ? '' : 'none';
+    sign.classList.toggle('sheet__sign--two', !state.options.showReceiver);
 
     updateScale();
   }
