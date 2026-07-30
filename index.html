@@ -8,6 +8,12 @@
   <meta name="theme-color" content="#00652e" />
   <meta name="color-scheme" content="light dark" />
   <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="فاکتور فروش" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preload" href="assets/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/Vazirmatn-Bold.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="assets/css/app.css" />
@@ -23,6 +29,11 @@
     </div>
   </div>
   <div class="topbar__actions">
+    <button type="button" class="btn btn--install btn--icon" id="btnInstall" title="نصب برنامه روی دستگاه" aria-label="نصب برنامه" hidden>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>
+      <span class="btn__label btn__label--full">نصب برنامه</span>
+      <span class="btn__label btn__label--short">نصب</span>
+    </button>
     <button type="button" class="btn btn--primary btn--icon" id="btnPdf" title="دانلود فاکتور در قطع A4" aria-label="دانلود PDF">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
       <span class="btn__label">دانلود PDF</span>
@@ -330,10 +341,7 @@
         <footer class="sheet__sign" id="outSign">
           <div class="signbox"><span>مهر و امضای فروشنده</span></div>
           <div class="signbox"><span>مهر و امضای خریدار</span></div>
-          <div class="signbox" id="outReceiver">
-            <span>نام و امضای تحویل‌گیرنده</span>
-            <span class="signbox__name">نام:</span>
-          </div>
+          <div class="signbox" id="outReceiver"><span>نام و امضای تحویل‌گیرنده</span></div>
         </footer>
 
         <div class="sheet__footline">
@@ -349,5 +357,6 @@
 <script src="assets/js/persian.js"></script>
 <script src="assets/js/app.js"></script>
 <script src="assets/js/export.js"></script>
+<script src="assets/js/pwa.js"></script>
 </body>
 </html>

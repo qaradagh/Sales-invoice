@@ -159,6 +159,17 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .btn--ghost { background: transparent; }
 
+/* دکمه نصب فقط وقتی ظاهر می‌شود که مرورگر امکان نصب را اعلام کند */
+.btn--install {
+  background: color-mix(in srgb, var(--brand-2) 12%, transparent);
+  border-color: color-mix(in srgb, var(--brand-2) 45%, transparent);
+  color: var(--brand);
+}
+.btn--install:hover { background: color-mix(in srgb, var(--brand-2) 18%, transparent); }
+html[data-theme="dark"] .btn--install { color: var(--brand-3); }
+.btn--install .btn__label { display: inline; }
+.btn--install .btn__label--short { display: none; }
+
 .btn--mini { padding: 6px 12px; font-size: .8rem; border-radius: var(--r-sm); }
 
 .btn--dashed {
@@ -713,22 +724,6 @@ html[data-theme="dark"] .item__total b { color: var(--brand-3); }
   text-align: center;
 }
 
-/* جای نوشتن نام تحویل‌گیرنده، با خط‌چین برای نوشتن */
-.signbox__name {
-  width: 100%;
-  margin-top: auto;
-  display: flex;
-  align-items: baseline;
-  gap: 2mm;
-  font-size: 7.5pt;
-}
-
-.signbox__name::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px dotted #cfdad2;
-}
-
 .sheet__footline {
   margin-top: 5mm;
   padding-top: 3mm;
@@ -768,6 +763,10 @@ html[data-theme="dark"] .item__total b { color: var(--brand-3); }
   .btn--primary .btn__label { display: inline; }
   .btn { padding: 9px 11px; }
   .btn--dashed .btn__label { display: inline; }
+
+  /* برچسب کوتاه‌تر برای دکمه نصب تا نوار در یک ردیف بماند */
+  .btn--install .btn__label--full { display: none; }
+  .btn--install .btn__label--short { display: inline; }
 
   /* تغییر اندازه پیش‌نمایش فقط در چیدمان دوستونی معنا دارد */
   #btnZoom { display: none; }
