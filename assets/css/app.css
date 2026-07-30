@@ -895,10 +895,10 @@ html[data-theme="dark"] .item__total b { color: var(--brand-3); }
   .topbar { position: static; padding: 10px 12px; gap: 8px; }
   .topbar__title { font-size: .95rem; }
 
-  /* لوگو به لبه چپ می‌رود، مثل سربرگ خود فاکتور */
+  /* لوگو و عنوان با هم یک گروه‌اند و وسط نوار می‌نشینند؛ لوگو سمت چپ نوشته */
   .topbar__brand {
     flex-direction: row-reverse;
-    margin-inline-start: auto;
+    margin-inline: auto;
   }
   .topbar__actions { width: 100%; gap: 6px; }
   .btn { padding: 8px 10px; }
