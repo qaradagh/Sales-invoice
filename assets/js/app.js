@@ -511,7 +511,7 @@
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = 'invoice-' + (state.invoice.number || 'new') + '.json';
+    a.download = Fa.fileLabel(state.invoice.number) + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

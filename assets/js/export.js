@@ -259,8 +259,7 @@
 
   function fileName(extension) {
     var input = document.querySelector('[data-path="invoice.number"]');
-    var number = (input && input.value.trim()) || 'new';
-    return 'faktor-' + number.replace(/[^\w؀-ۿ-]/g, '') + '.' + extension;
+    return Fa.fileLabel(input ? input.value : '') + '.' + extension;
   }
 
   /* ───────────────── وضعیت دکمه‌ها ───────────────── */
