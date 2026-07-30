@@ -7,7 +7,8 @@
   <meta name="description" content="ساخت و چاپ فاکتور فروش فارسی با محاسبه خودکار جمع، تخفیف و مبلغ قابل پرداخت" />
   <meta name="theme-color" content="#00652e" />
   <meta name="color-scheme" content="light dark" />
-  <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg" />
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg" />
+  <link rel="alternate icon" href="assets/icons/icon-192.png" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -29,7 +30,7 @@
     </div>
   </div>
   <div class="topbar__actions">
-    <button type="button" class="btn btn--install btn--icon" id="btnInstall" title="نصب برنامه روی دستگاه" aria-label="نصب برنامه" hidden>
+    <button type="button" class="btn btn--install btn--icon" id="btnInstall" title="نصب برنامه روی دستگاه" aria-label="نصب برنامه">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>
       <span class="btn__label btn__label--full">نصب برنامه</span>
       <span class="btn__label btn__label--short">نصب</span>
@@ -352,6 +353,53 @@
     </div>
   </div>
 </main>
+
+<!-- ───────────────── راهنمای نصب ───────────────── -->
+<div class="modal no-print" id="installModal" hidden>
+  <div class="modal__backdrop" data-close></div>
+  <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="installTitle">
+    <button type="button" class="modal__close" data-close aria-label="بستن">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+
+    <h2 class="modal__title" id="installTitle">نصب برنامه روی دستگاه</h2>
+    <p class="modal__lead">
+      بعد از نصب، برنامه با آیکون مستقل باز می‌شود، نوار آدرس ندارد و
+      <b>بدون اینترنت</b> هم فاکتور می‌سازد و خروجی PDF می‌گیرد.
+    </p>
+
+    <button type="button" class="btn btn--primary modal__action" id="btnInstallNow" hidden>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>
+      <span class="btn__label">نصب روی این دستگاه</span>
+    </button>
+
+    <p class="modal__hint" id="installHint">راه نصب در مرورگر شما:</p>
+
+    <ul class="guide">
+      <li class="guide__item" data-browser="android">
+        <span class="guide__name">کروم اندروید</span>
+        <span class="guide__steps">منوی سه‌نقطه <b>⋮</b> در گوشه بالا ← گزینهٔ «افزودن به صفحهٔ اصلی» یا «Install app»</span>
+      </li>
+      <li class="guide__item" data-browser="ios">
+        <span class="guide__name">سافاری آیفون و آی‌پد</span>
+        <span class="guide__steps">دکمهٔ اشتراک‌گذاری <svg class="guide__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg> در نوار پایین یا بالا ← «Add to Home Screen»</span>
+      </li>
+      <li class="guide__item" data-browser="firefox">
+        <span class="guide__name">فایرفاکس اندروید</span>
+        <span class="guide__steps">منوی سه‌نقطه <b>⋮</b> ← «Install» یا «افزودن به صفحهٔ اصلی»</span>
+      </li>
+      <li class="guide__item" data-browser="desktop">
+        <span class="guide__name">کروم و اِج روی کامپیوتر</span>
+        <span class="guide__steps">آیکون نصب در انتهای نوار آدرس، یا منوی سه‌نقطه ← «Install»</span>
+      </li>
+    </ul>
+
+    <p class="modal__note">
+      اگر صفحه را داخل مرورگر داخلی یک برنامهٔ دیگر (مثل تلگرام یا اینستاگرام)
+      باز کرده‌اید، اول آن را در کروم یا سافاری باز کنید.
+    </p>
+  </div>
+</div>
 
 <script src="assets/js/jalali.js"></script>
 <script src="assets/js/persian.js"></script>

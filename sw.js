@@ -4,7 +4,7 @@
    حافظه می‌آیند. فایل‌های ثابت از حافظه می‌آیند و در پس‌زمینه به‌روز می‌شوند.
    ========================================================================== */
 
-var VERSION = 'v3';
+var VERSION = 'v4';
 var CACHE = 'faktor-' + VERSION;
 
 var SHELL = [
@@ -18,6 +18,7 @@ var SHELL = [
   './assets/js/export.js',
   './assets/js/pwa.js',
   './assets/img/logo.svg',
+  './assets/icons/icon.svg',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
   './assets/icons/icon-maskable-512.png',
