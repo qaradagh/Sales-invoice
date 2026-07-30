@@ -6,6 +6,7 @@
 
   var STORAGE_KEY = 'shilan-invoice-v1';
   var THEME_KEY = 'shilan-invoice-theme';
+  var ZOOM_KEY = 'shilan-invoice-zoom';
 
   /* ───────────────── وضعیت پیش‌فرض ───────────────── */
 
@@ -318,17 +319,44 @@
   }
 
   var A4_WIDTH_PX = 0;
+  var A4_HEIGHT_PX = 0;
   var lastScale = null;
   var lastHeight = null;
+  var stacked = window.matchMedia('(max-width: 900px)');
+
+  /* 'fit' = کل برگه در ارتفاع پنجره، 'full' = اندازه واقعی (با اسکرول پیش‌نمایش) */
+  var zoomMode = 'fit';
+  try { zoomMode = localStorage.getItem(ZOOM_KEY) === 'full' ? 'full' : 'fit'; } catch (e) { /* پیش‌فرض */ }
+
+  /** ارتفاع نوار بالا را اندازه می‌گیرد تا پیش‌نمایش دقیقاً زیر آن بچسبد */
+  function updateTopbarHeight() {
+    var bar = $('.topbar');
+    if (!bar) return;
+    document.documentElement.style.setProperty('--topbar-h', Math.round(bar.offsetHeight) + 'px');
+  }
 
   function updateScale() {
-    if (!A4_WIDTH_PX) A4_WIDTH_PX = mmToPx(210);
+    if (!A4_WIDTH_PX) {
+      A4_WIDTH_PX = mmToPx(210);
+      A4_HEIGHT_PX = mmToPx(297);
+    }
+
     var styles = getComputedStyle(previewWrap);
-    var available = previewWrap.clientWidth
+    var availableW = previewWrap.clientWidth
       - parseFloat(styles.paddingInlineStart || 0)
       - parseFloat(styles.paddingInlineEnd || 0);
 
-    var scale = Math.min(1, available / A4_WIDTH_PX);
+    var scale = availableW / A4_WIDTH_PX;
+
+    /* در حالت «متناسب با صفحه» یک برگه کامل در ارتفاع پنجره جا می‌شود */
+    if (!stacked.matches && zoomMode === 'fit') {
+      var availableH = previewWrap.clientHeight
+        - parseFloat(styles.paddingTop || 0)
+        - parseFloat(styles.paddingBottom || 0);
+      if (availableH > 0) scale = Math.min(scale, availableH / A4_HEIGHT_PX);
+    }
+
+    scale = Math.min(1, scale);
     if (!isFinite(scale) || scale <= 0) scale = 1;
     scale = Number(scale.toFixed(4));
 
@@ -438,13 +466,31 @@
     save();
   });
 
-  $('#btnAddItem').addEventListener('click', function () {
+  function addItem() {
     state.items.push({ desc: '', qty: '', price: '' });
     renderItemsForm();
     renderPreview();
     save();
     var inputs = $$('[data-item="desc"]', itemList);
-    if (inputs.length) inputs[inputs.length - 1].focus();
+    var last = inputs[inputs.length - 1];
+    if (last) {
+      last.focus();
+      last.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+
+  $('#btnAddItem').addEventListener('click', addItem);
+
+  /* زدن Enter در فیلدهای یک ردیف، ردیف بعدی را می‌سازد */
+  itemList.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+    e.preventDefault();
+    var index = Number(e.target.dataset.index);
+    if (index === state.items.length - 1) addItem();
+    else {
+      var next = itemList.querySelector('[data-item="desc"][data-index="' + (index + 1) + '"]');
+      if (next) next.focus();
+    }
   });
 
   $('#btnToday').addEventListener('click', function () {
@@ -510,6 +556,20 @@
     });
   });
 
+  /* اندازه پیش‌نمایش */
+  function applyZoomLabel() {
+    $('#zoomLabel').textContent = zoomMode === 'fit' ? 'اندازه واقعی' : 'متناسب با صفحه';
+  }
+
+  $('#btnZoom').addEventListener('click', function () {
+    zoomMode = zoomMode === 'fit' ? 'full' : 'fit';
+    try { localStorage.setItem(ZOOM_KEY, zoomMode); } catch (e) { /* بی‌اهمیت */ }
+    applyZoomLabel();
+    lastScale = null;
+    updateScale();
+    previewWrap.scrollTop = 0;
+  });
+
   /* تم */
   var btnTheme = $('#btnTheme');
   function applyTheme(theme) {
@@ -563,13 +623,20 @@
 
     buildMonthSelect();
     load();
+    applyZoomLabel();
+    updateTopbarHeight();
     renderAll();
 
-    window.addEventListener('resize', updateScale);
+    window.addEventListener('resize', function () {
+      updateTopbarHeight();
+      updateScale();
+    });
     if (window.ResizeObserver) {
       new ResizeObserver(updateScale).observe(previewWrap);
       new ResizeObserver(updateScale).observe(sheet);
+      new ResizeObserver(updateTopbarHeight).observe($('.topbar'));
     }
+    if (stacked.addEventListener) stacked.addEventListener('change', updateScale);
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(updateScale);
     }

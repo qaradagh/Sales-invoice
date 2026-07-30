@@ -59,7 +59,8 @@
   --r-lg: 18px;
 
   --font: 'Vazirmatn', 'IRANSans', 'Segoe UI', Tahoma, sans-serif;
-  --panel-w: 384px;
+  --panel-w: 400px;
+  --topbar-h: 72px;
 }
 
 html[data-theme="dark"] {
@@ -189,37 +190,29 @@ html[data-theme="dark"] .btn--dashed { color: var(--brand-3); }
   gap: 0;
 }
 
+/* پنل فرم با خودِ صفحه اسکرول می‌شود — بدون ناحیه اسکرول تودرتو */
 .panel {
   min-width: 0;
-  position: sticky;
-  top: 71px;
-  height: calc(100vh - 71px);
   border-inline-start: 1px solid var(--line);
   background: var(--bg-2);
 }
 
 .panel__scroll {
-  height: 100%;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 16px 16px 40px;
+  padding: 16px 16px 48px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-
-.panel__scroll::-webkit-scrollbar { width: 10px; }
-.panel__scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; border: 3px solid var(--bg-2); }
 
 .panel__note { margin: 4px 0 0; font-size: .74rem; color: var(--muted); text-align: center; }
 
 /* ─────────────────────────── کارت‌های فرم ─────────────────────────── */
 
 .card {
+  flex: none; /* کارت‌ها هرگز فشرده نشوند */
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   background: var(--bg-2);
-  overflow: hidden;
 }
 
 .card__head {
@@ -392,14 +385,27 @@ html[data-theme="dark"] .item__total b { color: var(--brand-3); }
 
 /* ─────────────────────────── ناحیه پیش‌نمایش ─────────────────────────── */
 
+/* پیش‌نمایش همیشه در دید می‌ماند و کل برگه در ارتفاع پنجره جا می‌شود */
 .preview {
   min-width: 0;
+  position: sticky;
+  top: var(--topbar-h);
+  height: calc(100vh - var(--topbar-h));
+  overflow-y: auto;
   overflow-x: clip;
-  padding: 26px 22px 60px;
-  min-height: calc(100vh - 71px);
+  overscroll-behavior: contain;
+  padding: 22px 22px 28px;
   background:
     radial-gradient(1100px 420px at 70% -10%, color-mix(in srgb, var(--brand-3) 16%, transparent), transparent 70%),
     var(--bg);
+}
+
+.preview::-webkit-scrollbar { width: 10px; }
+.preview::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted) 40%, transparent);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
 }
 
 .preview__stage {
@@ -688,14 +694,18 @@ html[data-theme="dark"] .item__total b { color: var(--brand-3); }
   .layout { grid-template-columns: 1fr; }
   /* در موبایل ابتدا فرم و سپس پیش‌نمایش نمایش داده می‌شود */
   .panel {
-    position: static;
-    height: auto;
     border-inline-start: 0;
     border-bottom: 1px solid var(--line);
     order: 1;
   }
-  .panel__scroll { height: auto; overflow: visible; padding-bottom: 24px; }
-  .preview { order: 2; min-height: 0; padding: 18px 12px 40px; }
+  .panel__scroll { padding-bottom: 24px; }
+  .preview {
+    order: 2;
+    position: static;
+    height: auto;
+    overflow: visible;
+    padding: 18px 12px 40px;
+  }
   .topbar__sub { display: none; }
 }
 
