@@ -258,8 +258,7 @@
   }
 
   function fileName(extension) {
-    var input = document.querySelector('[data-path="invoice.number"]');
-    return Fa.fileLabel(input ? input.value : '') + '.' + extension;
+    return window.Invoice.fileLabel() + '.' + extension;
   }
 
   /* ───────────────── وضعیت دکمه‌ها ───────────────── */
