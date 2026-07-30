@@ -183,7 +183,23 @@ html[data-theme="dark"] .btn--dashed { color: var(--brand-3); }
 }
 .btn--danger-ghost:hover { background: color-mix(in srgb, #b0342f 8%, transparent); border-color: #b0342f; }
 
-.ico { font-size: 1rem; line-height: 1; }
+/* آیکون‌ها به‌صورت SVG درون‌خط هستند؛ نویسه‌های یونیکد روی iOS و اندروید
+   در قلم سیستم وجود ندارند و به‌جای آیکون، جای خالی نمایش داده می‌شد */
+.ico {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.btn--icon { gap: 6px; }
+
+.btn.is-busy { opacity: .65; cursor: progress; }
+.btn:disabled { pointer-events: none; }
 
 /* ─────────────────────────── چیدمان ─────────────────────────── */
 
@@ -435,6 +451,9 @@ html[data-theme="dark"] .item__total b { color: var(--brand-3); }
 
 /* موقعیت‌دهی فیزیکی است تا با transform-origin هم‌راستا بماند */
 .sheet {
+  /* برگه فاکتور همیشه روشن است، حتی وقتی سایت یا سیستم‌عامل تم تیره دارد */
+  color-scheme: only light;
+  forced-color-adjust: none;
   position: absolute;
   top: 0;
   right: 0;
@@ -723,14 +742,24 @@ html[data-theme="dark"] .item__total b { color: var(--brand-3); }
     padding: 18px 12px 40px;
   }
   .topbar__sub { display: none; }
+
+  /* روی تبلت و موبایل فقط دکمه اصلی متن دارد تا نوار بالا جا شود */
+  .btn__label { display: none; }
+  .btn--primary .btn__label { display: inline; }
+  .btn { padding: 9px 11px; }
+  .btn--dashed .btn__label { display: inline; }
+
+  /* تغییر اندازه پیش‌نمایش فقط در چیدمان دوستونی معنا دارد */
+  #btnZoom { display: none; }
 }
 
 @media (max-width: 560px) {
-  .topbar { padding: 10px 12px; gap: 10px; }
+  /* روی گوشی نوار بالا چسبان نیست تا دو ردیف دکمه، صفحه را اشغال نکند */
+  .topbar { position: static; padding: 10px 12px; gap: 8px; }
   .topbar__title { font-size: .95rem; }
-  .btn__label { display: none; }
-  .btn--primary .btn__label { display: inline; }
-  .btn { padding: 9px 12px; }
+  .topbar__actions { width: 100%; gap: 6px; }
+  .btn { padding: 8px 10px; }
+  .ico { width: 16px; height: 16px; }
   .grid--2, .item__grid { grid-template-columns: 1fr; }
   .date-row { grid-template-columns: 1fr 1.4fr 1fr; }
   .date-row .btn--mini { grid-column: 1 / -1; }
@@ -765,13 +794,15 @@ html[data-theme="dark"] .item__total b { color: var(--brand-3); }
 
   .preview__stage { width: auto; height: auto; margin: 0; }
 
-  /* برگه دیگر ارتفاع ثابت ۲۹۷ میلی‌متری ندارد؛ ارتفاع ثابت به‌علاوهٔ حاشیهٔ
-     پیش‌فرض مرورگر باعث سرریز چند میلی‌متری و ایجاد صفحه دوم خالی می‌شد */
+  /* عرض ثابت و مطلق است، نه ۱۰۰٪. با عرض نسبی، مرورگرهای موبایل صفحه را با
+     پهنای viewport گوشی (حدود ۳۹۰ پیکسل) چیدمان می‌کنند و بعد برای رسیدن به
+     پهنای کاغذ حدود دو برابر بزرگش می‌کنند — عرض درست درمی‌آید ولی طول دو
+     برابر می‌شود و به صفحه دوم می‌رود. ۱۸۶ میلی‌متر = A4 منهای حاشیه‌ها */
   .sheet {
     position: static;
     transform: none;
-    width: 100%;
-    max-width: 100%;
+    width: 186mm;
+    max-width: 186mm;
     min-height: 230mm;
     height: auto;
     padding: 5mm 0 0;
