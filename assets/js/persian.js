@@ -90,7 +90,15 @@
     return (neg ? 'منفی ' : '') + words.join(' و ');
   }
 
+  /** نام فایل خروجی، مثلاً «فاکتور۷۶» */
+  function fileLabel(number) {
+    var digits = toFaDigits(toLatinDigits(number).trim());
+    var clean = digits.replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, ' ').trim();
+    return 'فاکتور' + clean;
+  }
+
   global.Fa = {
+    fileLabel: fileLabel,
     toFaDigits: toFaDigits,
     toLatinDigits: toLatinDigits,
     parseNum: parseNum,
