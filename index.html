@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>صدور فاکتور فروش | شیلان ستور گستر</title>
+  <meta name="description" content="ساخت و چاپ فاکتور فروش فارسی با محاسبه خودکار جمع، تخفیف و مبلغ قابل پرداخت" />
+  <meta name="theme-color" content="#00652e" />
+  <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg" />
+  <link rel="preload" href="assets/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="assets/fonts/Vazirmatn-Bold.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="assets/css/app.css" />
+</head>
+<body>
+
+<header class="topbar no-print">
+  <div class="topbar__brand">
+    <img src="assets/img/logo.svg" alt="لوگو" class="topbar__logo" />
+    <div>
+      <h1 class="topbar__title">صدور فاکتور فروش</h1>
+      <p class="topbar__sub">اطلاعات را وارد کنید، فاکتور بی‌درنگ ساخته می‌شود</p>
+    </div>
+  </div>
+  <div class="topbar__actions">
+    <button type="button" class="btn btn--ghost" id="btnTheme" title="حالت روشن / تیره">
+      <span class="ico" aria-hidden="true">◐</span><span class="btn__label">تم</span>
+    </button>
+    <button type="button" class="btn btn--ghost" id="btnSave" title="ذخیره اطلاعات در فایل">
+      <span class="ico" aria-hidden="true">⭳</span><span class="btn__label">ذخیره</span>
+    </button>
+    <button type="button" class="btn btn--ghost" id="btnLoad" title="بارگذاری از فایل">
+      <span class="ico" aria-hidden="true">⭱</span><span class="btn__label">بارگذاری</span>
+    </button>
+    <input type="file" id="fileInput" accept="application/json" hidden />
+    <button type="button" class="btn btn--primary" id="btnPrint">
+      <span class="ico" aria-hidden="true">🖶</span><span class="btn__label">چاپ / خروجی PDF</span>
+    </button>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ───────────────── فرم ورود اطلاعات ───────────────── -->
+  <aside class="panel no-print" id="panel">
+    <div class="panel__scroll">
+
+      <section class="card" data-open="true">
+        <button type="button" class="card__head">
+          <span class="card__title">اطلاعات فاکتور</span>
+          <span class="card__chev" aria-hidden="true"></span>
+        </button>
+        <div class="card__body">
+          <div class="grid grid--2">
+            <label class="field">
+              <span class="field__label">شماره فاکتور</span>
+              <input type="text" inputmode="numeric" data-path="invoice.number" placeholder="۲۲" />
+            </label>
+            <label class="field">
+              <span class="field__label">واحد پول</span>
+              <select data-path="invoice.currency">
+                <option value="ریال">ریال</option>
+                <option value="تومان">تومان</option>
+              </select>
+            </label>
+          </div>
+          <div class="field">
+            <span class="field__label">تاریخ (شمسی)</span>
+            <div class="date-row">
+              <input type="text" inputmode="numeric" data-path="invoice.date.y" class="date-input" aria-label="سال" placeholder="سال" />
+              <select data-path="invoice.date.m" id="monthSelect" aria-label="ماه"></select>
+              <input type="text" inputmode="numeric" data-path="invoice.date.d" class="date-input" aria-label="روز" placeholder="روز" />
+              <button type="button" class="btn btn--mini" id="btnToday">امروز</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" data-open="true">
+        <button type="button" class="card__head">
+          <span class="card__title">خریدار</span>
+          <span class="card__chev" aria-hidden="true"></span>
+        </button>
+        <div class="card__body">
+          <label class="field">
+            <span class="field__label">نام خریدار</span>
+            <input type="text" data-path="buyer.name" placeholder="آقای دکتر کاوه" />
+          </label>
+          <label class="field">
+            <span class="field__label">آدرس</span>
+            <textarea rows="2" data-path="buyer.address" placeholder="آدرس خریدار"></textarea>
+          </label>
+          <div class="grid grid--2">
+            <label class="field">
+              <span class="field__label">شماره تماس</span>
+              <input type="text" inputmode="tel" data-path="buyer.phone" placeholder="۰۹۱۲۰۰۰۰۰۰۰" />
+            </label>
+            <label class="field">
+              <span class="field__label">کد اقتصادی / ملی</span>
+              <input type="text" inputmode="numeric" data-path="buyer.nationalId" placeholder="اختیاری" />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" data-open="true">
+        <button type="button" class="card__head">
+          <span class="card__title">اقلام فاکتور</span>
+          <span class="card__chev" aria-hidden="true"></span>
+        </button>
+        <div class="card__body">
+          <div id="itemList" class="items"></div>
+          <button type="button" class="btn btn--dashed" id="btnAddItem">
+            <span class="ico" aria-hidden="true">＋</span> افزودن ردیف
+          </button>
+        </div>
+      </section>
+
+      <section class="card" data-open="true">
+        <button type="button" class="card__head">
+          <span class="card__title">مبالغ و تخفیف</span>
+          <span class="card__chev" aria-hidden="true"></span>
+        </button>
+        <div class="card__body">
+          <label class="field">
+            <span class="field__label">مانده قبلی</span>
+            <input type="text" inputmode="decimal" data-path="totals.prevBalance" data-money placeholder="۰" />
+          </label>
+          <div class="field">
+            <span class="field__label">تخفیف</span>
+            <div class="split">
+              <input type="text" inputmode="decimal" data-path="totals.discountValue" data-money placeholder="۰" />
+              <select data-path="totals.discountType" class="split__unit">
+                <option value="amount">مبلغ</option>
+                <option value="percent">درصد ٪</option>
+              </select>
+            </div>
+          </div>
+          <label class="field">
+            <span class="field__label">مالیات بر ارزش افزوده (٪)</span>
+            <input type="text" inputmode="decimal" data-path="totals.vatPercent" placeholder="۰" />
+            <span class="field__hint">اگر صفر باشد در فاکتور نمایش داده نمی‌شود</span>
+          </label>
+          <label class="field">
+            <span class="field__label">پرداخت شده (علی‌الحساب)</span>
+            <input type="text" inputmode="decimal" data-path="totals.paid" data-money placeholder="۰" />
+          </label>
+        </div>
+      </section>
+
+      <section class="card">
+        <button type="button" class="card__head">
+          <span class="card__title">فروشنده و اطلاعات بانکی</span>
+          <span class="card__chev" aria-hidden="true"></span>
+        </button>
+        <div class="card__body">
+          <label class="field">
+            <span class="field__label">نام مجموعه</span>
+            <input type="text" data-path="seller.name" />
+          </label>
+          <label class="field">
+            <span class="field__label">شعار / زیرعنوان</span>
+            <input type="text" data-path="seller.tagline" />
+          </label>
+          <div class="grid grid--2">
+            <label class="field">
+              <span class="field__label">تلفن</span>
+              <input type="text" inputmode="tel" data-path="seller.phone" />
+            </label>
+            <label class="field">
+              <span class="field__label">شماره ثبت</span>
+              <input type="text" inputmode="numeric" data-path="seller.regNo" />
+            </label>
+          </div>
+          <label class="field">
+            <span class="field__label">آدرس</span>
+            <textarea rows="2" data-path="seller.address"></textarea>
+          </label>
+          <label class="field">
+            <span class="field__label">شماره شبا</span>
+            <input type="text" data-path="seller.iban" />
+          </label>
+          <div class="grid grid--2">
+            <label class="field">
+              <span class="field__label">شماره حساب</span>
+              <input type="text" inputmode="numeric" data-path="seller.account" />
+            </label>
+            <label class="field">
+              <span class="field__label">بانک</span>
+              <input type="text" data-path="seller.bank" />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <button type="button" class="card__head">
+          <span class="card__title">توضیحات و تنظیمات نمایش</span>
+          <span class="card__chev" aria-hidden="true"></span>
+        </button>
+        <div class="card__body">
+          <label class="field">
+            <span class="field__label">توضیحات</span>
+            <textarea rows="3" data-path="notes" placeholder="مثلاً: تسویه حساب حداکثر تا یک هفته پس از تحویل"></textarea>
+          </label>
+          <label class="switch">
+            <input type="checkbox" data-path="options.showWords" />
+            <span>نمایش مبلغ به حروف</span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" data-path="options.showStamp" />
+            <span>نمایش کادر مهر و امضا</span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" data-path="options.showBank" />
+            <span>نمایش اطلاعات بانکی</span>
+          </label>
+        </div>
+      </section>
+
+      <button type="button" class="btn btn--danger-ghost" id="btnReset">پاک کردن و شروع فاکتور جدید</button>
+      <p class="panel__note">اطلاعات به‌صورت خودکار در همین مرورگر ذخیره می‌شود.</p>
+    </div>
+  </aside>
+
+  <!-- ───────────────── پیش‌نمایش فاکتور ───────────────── -->
+  <div class="preview" id="previewWrap">
+    <div class="preview__stage" id="stage">
+      <article class="sheet" id="sheet">
+
+        <header class="sheet__top">
+          <div class="sheet__brand">
+            <img src="assets/img/logo.svg" alt="لوگوی مجموعه" class="sheet__logo" />
+            <div class="sheet__brandtext">
+              <h2 class="sheet__company" data-out="seller.name"></h2>
+              <p class="sheet__tagline" data-out="seller.tagline"></p>
+            </div>
+          </div>
+          <div class="sheet__doc">
+            <div class="sheet__doctitle">فاکتور فروش</div>
+            <dl class="sheet__meta">
+              <div class="metarow"><dt>شماره</dt><dd data-out="invoice.number"></dd></div>
+              <div class="metarow"><dt>تاریخ</dt><dd data-out="invoice.dateText"></dd></div>
+            </dl>
+          </div>
+        </header>
+
+        <section class="sheet__parties">
+          <div class="party">
+            <span class="party__tag">خریدار</span>
+            <div class="party__body">
+              <p class="party__name" data-out="buyer.name"></p>
+              <p class="party__line" data-row="buyer.address"><span class="lbl">آدرس:</span> <span data-out="buyer.address"></span></p>
+              <p class="party__line" data-row="buyer.phone"><span class="lbl">تماس:</span> <span data-out="buyer.phone"></span></p>
+              <p class="party__line" data-row="buyer.nationalId"><span class="lbl">کد اقتصادی:</span> <span data-out="buyer.nationalId"></span></p>
+            </div>
+          </div>
+          <div class="party party--seller">
+            <span class="party__tag">فروشنده</span>
+            <div class="party__body">
+              <p class="party__name" data-out="seller.name"></p>
+              <p class="party__line" data-row="seller.address"><span class="lbl">آدرس:</span> <span data-out="seller.address"></span></p>
+              <p class="party__line" data-row="seller.phone"><span class="lbl">تماس:</span> <span data-out="seller.phone"></span></p>
+              <p class="party__line" data-row="seller.regNo"><span class="lbl">شماره ثبت:</span> <span data-out="seller.regNo"></span></p>
+            </div>
+          </div>
+        </section>
+
+        <table class="itable">
+          <thead>
+            <tr>
+              <th class="c-idx">ردیف</th>
+              <th class="c-desc">شرح کالا</th>
+              <th class="c-qty">وزن (کیلوگرم)</th>
+              <th class="c-price">قیمت هر کیلو</th>
+              <th class="c-sum">جمع کل</th>
+            </tr>
+          </thead>
+          <tbody id="outRows"></tbody>
+        </table>
+
+        <section class="sheet__bottom">
+          <div class="sheet__side">
+            <div class="wordsbox" id="outWordsBox">
+              <span class="wordsbox__tag">مبلغ به حروف</span>
+              <p class="wordsbox__text" id="outWords"></p>
+            </div>
+            <div class="bankbox" id="outBankBox">
+              <span class="bankbox__tag">اطلاعات پرداخت</span>
+              <p data-row="seller.iban"><span class="lbl">شبا:</span> <span class="ltr" data-out="seller.iban"></span></p>
+              <p data-row="seller.account"><span class="lbl">شماره حساب:</span> <span data-out="seller.account"></span></p>
+              <p data-row="seller.bank"><span class="lbl">بانک:</span> <span data-out="seller.bank"></span></p>
+            </div>
+            <div class="notesbox" id="outNotesBox">
+              <span class="notesbox__tag">توضیحات</span>
+              <p id="outNotes"></p>
+            </div>
+          </div>
+
+          <div class="totals" id="outTotals"></div>
+        </section>
+
+        <footer class="sheet__sign" id="outSign">
+          <div class="signbox"><span>مهر و امضای فروشنده</span></div>
+          <div class="signbox"><span>مهر و امضای خریدار</span></div>
+        </footer>
+
+        <div class="sheet__footline">
+          <span data-out="seller.name"></span>
+          <span data-row="seller.phone"><span class="dot">•</span><span data-out="seller.phone"></span></span>
+        </div>
+      </article>
+    </div>
+  </div>
+</main>
+
+<script src="assets/js/jalali.js"></script>
+<script src="assets/js/persian.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
