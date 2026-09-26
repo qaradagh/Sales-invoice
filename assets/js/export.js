@@ -294,6 +294,7 @@
         var dataUrl = canvas.toDataURL('image/jpeg', 0.94);
         var jpeg = base64ToBytes(dataUrl.split(',')[1]);
         download(buildPdf(jpeg, canvas.width, canvas.height), fileName('pdf'));
+        if (window.Invoice && window.Invoice.recordArchive) window.Invoice.recordArchive();
       });
     });
   }
@@ -304,6 +305,7 @@
         return new Promise(function (resolve) {
           canvas.toBlob(function (blob) {
             download(blob, fileName('png'));
+            if (window.Invoice && window.Invoice.recordArchive) window.Invoice.recordArchive();
             resolve();
           }, 'image/png');
         });

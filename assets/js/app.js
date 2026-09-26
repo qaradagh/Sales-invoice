@@ -7,6 +7,9 @@
   var STORAGE_KEY = 'shilan-invoice-v1';
   var THEME_KEY = 'shilan-invoice-theme';
   var ZOOM_KEY = 'shilan-invoice-zoom';
+  var ARCHIVE_KEY = 'shilan-invoice-archive-v1';
+  var CONTACTS_KEY = 'shilan-invoice-contacts-v1';
+  var ARCHIVE_LIMIT = 300;
 
   /* ───────────────── وضعیت پیش‌فرض ───────────────── */
 
@@ -327,7 +330,7 @@
     return parts.length ? parts.join('_') : 'فاکتور';
   }
 
-  window.Invoice = { fileLabel: fileLabel };
+  window.Invoice = { fileLabel: fileLabel, recordArchive: recordArchive };
 
   function money(label, value, cls) {
     return '<div class="trow ' + (cls || '') + '">' +
@@ -452,6 +455,7 @@
     if (el.dataset && el.dataset.path) {
       setPath(state, el.dataset.path, readInput(el));
       if (el.dataset.path === 'invoice.currency') renderItemsForm();
+      if (el.dataset.path === 'buyer.name') applyContactAutofill(el.value);
       renderPreview();
       save();
       return;
@@ -542,6 +546,7 @@
   });
 
   $('#btnPrint').addEventListener('click', function () {
+    recordArchive();
     window.print();
   });
 
@@ -620,6 +625,199 @@
     applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
   });
 
+  /* ───────────────── آرشیو فاکتورها ─────────────────
+     هر بار که فاکتور چاپ یا به PDF/PNG تبدیل می‌شود، یک نسخهٔ کامل از آن
+     (برای بازکردن دوباره) به همراه خلاصه‌اش (خریدار، شماره، تاریخ، مبلغ)
+     در localStorage آرشیو می‌شود. اگر شماره‌ی فاکتور قبلاً آرشیو شده باشد،
+     همان ردیف به‌روزرسانی می‌شود تا با هر بار پرینت مجدد، ردیف تکراری
+     ساخته نشود. */
+
+  function loadArchive() {
+    try {
+      var list = JSON.parse(localStorage.getItem(ARCHIVE_KEY) || '[]');
+      return Array.isArray(list) ? list : [];
+    } catch (e) { return []; }
+  }
+
+  function saveArchive(list) {
+    try { localStorage.setItem(ARCHIVE_KEY, JSON.stringify(list)); } catch (e) { /* بی‌اهمیت */ }
+  }
+
+  function jalaliShort(d) {
+    var y = Fa.parseNum(d.y), m = Fa.parseNum(d.m), day = Fa.parseNum(d.d);
+    if (!Jalali.isValid(y, m, day)) return '—';
+    return Fa.toFaDigits(day) + ' ' + (Jalali.MONTHS[m - 1] || '') + ' ' + Fa.toFaDigits(y);
+  }
+
+  /** فاکتور جاری را در آرشیو ذخیره (یا در صورت هم‌شماره بودن، به‌روزرسانی) می‌کند */
+  function recordArchive() {
+    var number = String(state.invoice.number || '').trim();
+    var buyerName = String(state.buyer.name || '').trim();
+    if (!number && !buyerName) return; // فاکتور خالی آرشیو نمی‌شود
+
+    var t = computeTotals();
+    var list = loadArchive();
+    var key = Fa.toLatinDigits(number);
+    var idx = key ? list.findIndex(function (e) { return Fa.toLatinDigits(String(e.number || '')) === key; }) : -1;
+
+    var entry = {
+      id: idx > -1 ? list[idx].id : String(Date.now()) + Math.random().toString(36).slice(2, 7),
+      number: state.invoice.number,
+      date: { y: state.invoice.date.y, m: state.invoice.date.m, d: state.invoice.date.d },
+      buyerName: buyerName || 'بدون نام',
+      currency: state.invoice.currency,
+      payable: t.payable,
+      savedAt: Date.now(),
+      state: JSON.parse(JSON.stringify(state))
+    };
+
+    if (idx > -1) list[idx] = entry; else list.unshift(entry);
+    list.sort(function (a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
+    if (list.length > ARCHIVE_LIMIT) list = list.slice(0, ARCHIVE_LIMIT);
+    saveArchive(list);
+
+    upsertContact(state.buyer);
+    renderArchiveList();
+  }
+
+  function renderArchiveList() {
+    var wrap = $('#archiveList');
+    var empty = $('#archiveEmptyMsg');
+    if (!wrap) return;
+    var list = loadArchive();
+
+    if (empty) empty.hidden = list.length > 0;
+    wrap.innerHTML = list.map(function (e) {
+      return '<div class="archive-item">' +
+        '<div class="archive-item__info">' +
+        '<span class="archive-item__name">' + escapeHtml(e.buyerName || 'بدون نام') + '</span>' +
+        '<span class="archive-item__meta">شماره ' + escapeHtml(Fa.toFaDigits(String(e.number || '—'))) +
+        ' · ' + jalaliShort(e.date) + ' · ' + Fa.formatMoney(e.payable) + ' ' + escapeHtml(e.currency || '') + '</span>' +
+        '</div>' +
+        '<div class="archive-item__actions">' +
+        '<button type="button" class="btn btn--mini" data-archive-open="' + e.id + '">بازکردن</button>' +
+        '<button type="button" class="btn btn--mini btn--danger-ghost" data-archive-del="' + e.id + '">حذف</button>' +
+        '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function openArchiveModal() {
+    renderArchiveList();
+    var modal = $('#archiveModal');
+    if (!modal) return;
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeArchiveModal() {
+    var modal = $('#archiveModal');
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  (function wireArchiveModal() {
+    var modal = $('#archiveModal');
+    var btn = $('#btnArchive');
+    if (btn) btn.addEventListener('click', openArchiveModal);
+    if (!modal) return;
+
+    modal.addEventListener('click', function (e) {
+      if (e.target.closest('[data-archive-close]')) { closeArchiveModal(); return; }
+
+      var openBtn = e.target.closest('[data-archive-open]');
+      if (openBtn) {
+        var entry = loadArchive().filter(function (x) { return x.id === openBtn.dataset.archiveOpen; })[0];
+        if (entry && confirm('فاکتور فعلی جایگزین می‌شود. اگر فاکتور فعلی را آرشیو نکرده‌اید، اطلاعاتش از دست می‌رود. ادامه می‌دهید؟')) {
+          state = merge(defaultState(), JSON.parse(JSON.stringify(entry.state)));
+          renderAll();
+          save();
+          closeArchiveModal();
+        }
+        return;
+      }
+
+      var delBtn = e.target.closest('[data-archive-del]');
+      if (delBtn && confirm('این فاکتور از آرشیو حذف شود؟')) {
+        saveArchive(loadArchive().filter(function (x) { return x.id !== delBtn.dataset.archiveDel; }));
+        renderArchiveList();
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !modal.hidden) closeArchiveModal();
+    });
+  })();
+
+  /* ───────────────── خریدارهای پرتکرار (مثل مخاطبین گوشی) ─────────────────
+     هر بار که فاکتوری آرشیو می‌شود، اطلاعات خریدارش ذخیره/به‌روزرسانی می‌شود.
+     با تایپ نام یک خریدار قبلی در فیلد «نام خریدار»، بقیه‌ی فیلدها
+     (آدرس، تلفن، کد اقتصادی/ملی) خودکار پر می‌شوند. */
+
+  function loadContacts() {
+    try {
+      var list = JSON.parse(localStorage.getItem(CONTACTS_KEY) || '[]');
+      return Array.isArray(list) ? list : [];
+    } catch (e) { return []; }
+  }
+
+  function saveContacts(list) {
+    try { localStorage.setItem(CONTACTS_KEY, JSON.stringify(list)); } catch (e) { /* بی‌اهمیت */ }
+  }
+
+  function upsertContact(buyer) {
+    var name = String(buyer.name || '').trim();
+    if (!name) return;
+    var list = loadContacts();
+    var key = name.toLowerCase();
+    var found = list.filter(function (c) { return String(c.name || '').trim().toLowerCase() === key; })[0];
+    if (found) {
+      found.name = name;
+      found.address = buyer.address || '';
+      found.phone = buyer.phone || '';
+      found.idType = buyer.idType || 'economic';
+      found.nationalId = buyer.nationalId || '';
+      found.count = (found.count || 1) + 1;
+      found.lastUsed = Date.now();
+    } else {
+      list.push({
+        name: name,
+        address: buyer.address || '',
+        phone: buyer.phone || '',
+        idType: buyer.idType || 'economic',
+        nationalId: buyer.nationalId || '',
+        count: 1,
+        lastUsed: Date.now()
+      });
+    }
+    saveContacts(list);
+    renderContactsDatalist();
+  }
+
+  function renderContactsDatalist() {
+    var dl = $('#buyerContactsList');
+    if (!dl) return;
+    var list = loadContacts().slice().sort(function (a, b) {
+      return (b.count || 0) - (a.count || 0) || (b.lastUsed || 0) - (a.lastUsed || 0);
+    });
+    dl.innerHTML = list.map(function (c) {
+      return '<option value="' + escapeHtml(c.name) + '"></option>';
+    }).join('');
+  }
+
+  function applyContactAutofill(name) {
+    var key = String(name || '').trim().toLowerCase();
+    if (!key) return;
+    var contact = loadContacts().filter(function (c) { return String(c.name || '').trim().toLowerCase() === key; })[0];
+    if (!contact) return;
+    state.buyer.address = contact.address || '';
+    state.buyer.phone = contact.phone || '';
+    state.buyer.idType = contact.idType || 'economic';
+    state.buyer.nationalId = contact.nationalId || '';
+    fillForm();
+  }
+
   /* ───────────────── ذخیره‌سازی ───────────────── */
 
   var saveTimer = null;
@@ -663,6 +861,7 @@
 
     buildMonthSelect();
     load();
+    renderContactsDatalist();
     applyZoomLabel();
     updateTopbarHeight();
     renderAll();
