@@ -32,7 +32,7 @@
       items: [{ desc: 'خوراک تخمیری', qty: '', price: '' }],
       totals: { prevBalance: '', discountType: 'amount', discountValue: '', vatPercent: '', paid: '', shippingValue: '' },
       notes: '',
-      options: { showWords: true, showStamp: true, showReceiver: true, showBank: true, showShipping: false }
+      options: { showWords: true, showStamp: true, showReceiver: true, showBank: true }
     };
   }
 
@@ -99,8 +99,9 @@
     var vatPercent = Math.max(Fa.parseNum(state.totals.vatPercent), 0);
     var vat = afterDiscount * vatPercent / 100;
 
-    var shippingEnabled = !!state.options.showShipping;
-    var shipping = shippingEnabled ? Fa.parseNum(state.totals.shippingValue) : 0;
+    // هزینه حمل و نقل هم مثل مانده قبلی، پرداخت‌شده و مالیات: فیلد همیشه در فرم هست،
+    // ولی فقط وقتی مقدارش صفر نباشد وارد محاسبه/نمایش می‌شود (قرارداد «ردیف خالی نمایش داده نمی‌شود»، رجوع کنید به renderPreview).
+    var shipping = Fa.parseNum(state.totals.shippingValue);
 
     var prevBalance = Fa.parseNum(state.totals.prevBalance);
     var paid = Fa.parseNum(state.totals.paid);
@@ -114,7 +115,6 @@
       discountValue: discountValue,
       vatPercent: vatPercent,
       vat: vat,
-      shippingEnabled: shippingEnabled,
       shipping: shipping,
       prevBalance: prevBalance,
       paid: paid,
@@ -254,7 +254,10 @@
       }
     }
 
-    /* جمع‌بندی مبالغ */
+    /* جمع‌بندی مبالغ
+       قرارداد کلی: هر ردیفی که مقدارش صفر/خالی باشد، اصلاً در پیش‌نمایش و چاپ فاکتور نشان داده نمی‌شود
+       (همین الان برای تخفیف، مالیات، هزینه حمل و نقل، مانده قبلی و پرداخت‌شده اعمال شده).
+       برای افزودن یک ردیف مبلغی جدید با همین رفتار، کافیست مثل موارد زیر یک شرط `if (مقدار !== 0)` قبل از push اضافه شود. */
     var rows = [];
     rows.push(money('جمع کل کالاها', t.subtotal, 'trow--sub'));
     if (t.discount > 0) {
@@ -264,7 +267,7 @@
       rows.push(money(dLabel, -t.discount, 'trow--minus'));
     }
     if (t.vat > 0) rows.push(money('مالیات بر ارزش افزوده (' + Fa.toFaDigits(t.vatPercent) + '٪)', t.vat));
-    if (t.shippingEnabled && t.shipping > 0) rows.push(money('هزینه حمل و نقل', t.shipping));
+    if (t.shipping !== 0) rows.push(money('هزینه حمل و نقل', t.shipping));
     if (t.prevBalance !== 0) rows.push(money('مانده قبلی', t.prevBalance));
     if (t.paid !== 0) rows.push(money('پرداخت شده', -t.paid, 'trow--minus'));
     rows.push(money('قابل پرداخت', t.payable, 'trow--grand'));
@@ -414,11 +417,6 @@
 
   var MONEY_PATHS = ['totals.prevBalance', 'totals.discountValue', 'totals.paid', 'totals.shippingValue'];
 
-  function updateShippingVisibility() {
-    var f = $('#fieldShipping');
-    if (f) f.style.display = state.options.showShipping ? '' : 'none';
-  }
-
   function fillForm() {
     $$('[data-path]').forEach(function (el) {
       var path = el.dataset.path;
@@ -433,7 +431,6 @@
         el.value = value == null ? '' : value;
       }
     });
-    updateShippingVisibility();
   }
 
   function readInput(el) {
@@ -477,7 +474,6 @@
     var el = e.target;
     if (el.type === 'checkbox' && el.dataset.path) {
       setPath(state, el.dataset.path, el.checked);
-      if (el.dataset.path === 'options.showShipping') updateShippingVisibility();
       renderPreview();
       save();
     }
