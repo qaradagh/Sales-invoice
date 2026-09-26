@@ -311,6 +311,33 @@ html[data-theme="dark"] .modal__lead b { color: var(--brand-3); }
 .archive-item__meta { font-size: .76rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .archive-item__actions { display: flex; gap: 6px; flex-shrink: 0; }
 
+.sync-box {
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-sm);
+  background: var(--field);
+}
+.sync-box__title { margin: 0 0 4px; font-size: .85rem; font-weight: 700; }
+.sync-box__hint { margin: 0 0 10px; font-size: .74rem; color: var(--ink-2); line-height: 1.7; }
+.sync-box__hint code { font-family: monospace; direction: ltr; unicode-bidi: embed; }
+.sync-box__row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+.sync-box__row:last-child { margin-bottom: 0; }
+.sync-box__row input {
+  flex: 1 1 160px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: .82rem;
+  direction: ltr;
+  text-align: right;
+}
+.sync-box__status { font-size: .76rem; color: var(--ink-2); flex: 1 1 auto; }
+
 .guide__item {
   border: 1px solid var(--line);
   border-radius: var(--r-md);

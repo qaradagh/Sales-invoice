@@ -419,6 +419,26 @@
     </button>
 
     <h2 class="modal__title" id="archiveTitle">آرشیو فاکتورها</h2>
+
+    <div class="sync-box" id="syncBox">
+      <p class="sync-box__title">همگام‌سازی با گیت‌هاب (qaradagh/Sales-invoice)</p>
+      <p class="sync-box__hint">
+        با وارد کردن یک Personal Access Token با دسترسی نوشتن به این ریپو، آرشیو و مخاطبین
+        در فایل‌های <code>data/archive.json</code> و <code>data/contacts.json</code> همان‌جا هم
+        ذخیره می‌شوند و با پاک شدن اطلاعات مرورگر یا تعویض دستگاه از بین نمی‌روند.
+        توکن فقط همین‌جا (روی همین مرورگر) نگه داشته می‌شود.
+      </p>
+      <div class="sync-box__row">
+        <input type="password" id="ghTokenInput" placeholder="github_pat_…" autocomplete="off" />
+        <button type="button" class="btn btn--mini" id="btnGhSave">ذخیره توکن</button>
+        <button type="button" class="btn btn--mini btn--danger-ghost" id="btnGhClear">قطع اتصال</button>
+      </div>
+      <div class="sync-box__row">
+        <span class="sync-box__status" id="syncStatus">متصل نیست</span>
+        <button type="button" class="btn btn--mini" id="btnGhSyncNow">همگام‌سازی الان</button>
+      </div>
+    </div>
+
     <p class="modal__lead" id="archiveEmptyMsg">
       هنوز فاکتوری آرشیو نشده است. با چاپ یا دانلود PDF/PNG یک فاکتور، به‌طور خودکار همین‌جا ذخیره می‌شود.
     </p>

@@ -678,6 +678,7 @@
 
     upsertContact(state.buyer);
     renderArchiveList();
+    scheduleSyncPush();
   }
 
   function renderArchiveList() {
@@ -818,6 +819,148 @@
     fillForm();
   }
 
+  /* ───────────────── همگام‌سازی با گیت‌هاب (پشتیبان مشترک) ─────────────────
+     اختیاری: اگر یک Personal Access Token با دسترسی Contents: Read & Write
+     روی همین مخزن ذخیره شود، آرشیو فاکتورها و مخاطبین به‌صورت دو فایل JSON
+     در خودِ ریپو هم نگه داشته می‌شوند (data/archive.json و data/contacts.json)
+     تا با پاک شدن اطلاعات مرورگر یا تعویض دستگاه از بین نروند. توکن فقط در
+     همین مرورگر (localStorage) نگه‌داری می‌شود و به هیچ سرویس دیگری فرستاده
+     نمی‌شود؛ فقط مستقیماً به api.github.com. */
+
+  var GH_OWNER = 'qaradagh';
+  var GH_REPO = 'Sales-invoice';
+  var GH_BRANCH = 'main';
+  var GH_TOKEN_KEY = 'shilan-gh-token';
+  var GH_ARCHIVE_PATH = 'data/archive.json';
+  var GH_CONTACTS_PATH = 'data/contacts.json';
+
+  function ghToken() {
+    try { return localStorage.getItem(GH_TOKEN_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function utf8ToBase64(str) { return btoa(unescape(encodeURIComponent(str))); }
+  function base64ToUtf8(str) { return decodeURIComponent(escape(atob(str))); }
+
+  function ghRequest(path, opts) {
+    opts = opts || {};
+    var headers = { 'Authorization': 'Bearer ' + ghToken(), 'Accept': 'application/vnd.github+json' };
+    if (opts.headers) { for (var k in opts.headers) headers[k] = opts.headers[k]; }
+    var url = 'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + path;
+    return fetch(url, { method: opts.method || 'GET', headers: headers, body: opts.body });
+  }
+
+  function ghGetJson(path) {
+    return ghRequest(path + '?ref=' + GH_BRANCH).then(function (res) {
+      if (res.status === 404) return { sha: null, data: null };
+      if (!res.ok) throw new Error('خطای گیت‌هاب ' + res.status);
+      return res.json().then(function (body) {
+        return { sha: body.sha, data: JSON.parse(base64ToUtf8(body.content.replace(/\n/g, ''))) };
+      });
+    });
+  }
+
+  function ghPutJson(path, data, sha, message) {
+    return ghRequest(path, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: message,
+        content: utf8ToBase64(JSON.stringify(data, null, 2)),
+        branch: GH_BRANCH,
+        sha: sha || undefined
+      })
+    }).then(function (res) {
+      if (!res.ok) throw new Error('خطای گیت‌هاب ' + res.status);
+      return res.json();
+    });
+  }
+
+  function mergeArchiveLists(a, b) {
+    var map = {};
+    a.concat(b).forEach(function (e) {
+      if (!e || !e.id) return;
+      var existing = map[e.id];
+      if (!existing || (e.savedAt || 0) > (existing.savedAt || 0)) map[e.id] = e;
+    });
+    var list = Object.keys(map).map(function (k) { return map[k]; });
+    list.sort(function (x, y) { return (y.savedAt || 0) - (x.savedAt || 0); });
+    if (list.length > ARCHIVE_LIMIT) list = list.slice(0, ARCHIVE_LIMIT);
+    return list;
+  }
+
+  function mergeContactLists(a, b) {
+    var map = {};
+    a.concat(b).forEach(function (c) {
+      if (!c || !c.name) return;
+      var key = String(c.name).trim().toLowerCase();
+      var existing = map[key];
+      if (!existing || (c.lastUsed || 0) > (existing.lastUsed || 0)) map[key] = c;
+    });
+    return Object.keys(map).map(function (k) { return map[k]; });
+  }
+
+  function setSyncStatus(text) {
+    var el = $('#syncStatus');
+    if (el) el.textContent = text;
+  }
+
+  function syncPush() {
+    if (!ghToken()) return;
+    setSyncStatus('در حال همگام‌سازی…');
+    Promise.all([ghGetJson(GH_ARCHIVE_PATH), ghGetJson(GH_CONTACTS_PATH)])
+      .then(function (res) {
+        var mergedArchive = mergeArchiveLists(loadArchive(), res[0].data || []);
+        var mergedContacts = mergeContactLists(loadContacts(), res[1].data || []);
+        saveArchive(mergedArchive);
+        saveContacts(mergedContacts);
+        renderArchiveList();
+        renderContactsDatalist();
+        return Promise.all([
+          ghPutJson(GH_ARCHIVE_PATH, mergedArchive, res[0].sha, 'به‌روزرسانی آرشیو فاکتورها'),
+          ghPutJson(GH_CONTACTS_PATH, mergedContacts, res[1].sha, 'به‌روزرسانی مخاطبین خریدار')
+        ]);
+      })
+      .then(function () { setSyncStatus('آخرین همگام‌سازی: ' + new Date().toLocaleTimeString('fa-IR')); })
+      .catch(function (err) {
+        console.error(err);
+        setSyncStatus('همگام‌سازی ناموفق بود؛ توکن و اتصال اینترنت را بررسی کنید');
+      });
+  }
+
+  var syncTimer = null;
+  function scheduleSyncPush() {
+    if (!ghToken()) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(syncPush, 1200);
+  }
+
+  (function wireSyncBox() {
+    var tokenInput = $('#ghTokenInput');
+    var saveBtn = $('#btnGhSave');
+    var clearBtn = $('#btnGhClear');
+    var syncNowBtn = $('#btnGhSyncNow');
+    if (!tokenInput) return;
+
+    if (ghToken()) {
+      tokenInput.value = ghToken();
+      setSyncStatus('متصل — برای همگام‌سازی «همگام‌سازی الان» را بزنید');
+    }
+
+    if (saveBtn) saveBtn.addEventListener('click', function () {
+      var v = tokenInput.value.trim();
+      try { if (v) localStorage.setItem(GH_TOKEN_KEY, v); else localStorage.removeItem(GH_TOKEN_KEY); } catch (e) { /* بی‌اهمیت */ }
+      if (v) syncPush(); else setSyncStatus('متصل نیست');
+    });
+
+    if (clearBtn) clearBtn.addEventListener('click', function () {
+      try { localStorage.removeItem(GH_TOKEN_KEY); } catch (e) { /* بی‌اهمیت */ }
+      tokenInput.value = '';
+      setSyncStatus('متصل نیست');
+    });
+
+    if (syncNowBtn) syncNowBtn.addEventListener('click', syncPush);
+  })();
+
   /* ───────────────── ذخیره‌سازی ───────────────── */
 
   var saveTimer = null;
@@ -862,6 +1005,7 @@
     buildMonthSelect();
     load();
     renderContactsDatalist();
+    if (ghToken()) syncPush();
     applyZoomLabel();
     updateTopbarHeight();
     renderAll();
