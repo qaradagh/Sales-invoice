@@ -30,9 +30,9 @@
         date: { y: today.jy, m: today.jm, d: today.jd }
       },
       items: [{ desc: 'خوراک تخمیری', qty: '', price: '' }],
-      totals: { prevBalance: '', discountType: 'amount', discountValue: '', vatPercent: '', paid: '' },
+      totals: { prevBalance: '', discountType: 'amount', discountValue: '', vatPercent: '', paid: '', shippingValue: '' },
       notes: '',
-      options: { showWords: true, showStamp: true, showReceiver: true, showBank: true }
+      options: { showWords: true, showStamp: true, showReceiver: true, showBank: true, showShipping: false }
     };
   }
 
@@ -99,9 +99,12 @@
     var vatPercent = Math.max(Fa.parseNum(state.totals.vatPercent), 0);
     var vat = afterDiscount * vatPercent / 100;
 
+    var shippingEnabled = !!state.options.showShipping;
+    var shipping = shippingEnabled ? Fa.parseNum(state.totals.shippingValue) : 0;
+
     var prevBalance = Fa.parseNum(state.totals.prevBalance);
     var paid = Fa.parseNum(state.totals.paid);
-    var payable = afterDiscount + vat + prevBalance - paid;
+    var payable = afterDiscount + vat + shipping + prevBalance - paid;
 
     return {
       lines: lines,
@@ -111,6 +114,8 @@
       discountValue: discountValue,
       vatPercent: vatPercent,
       vat: vat,
+      shippingEnabled: shippingEnabled,
+      shipping: shipping,
       prevBalance: prevBalance,
       paid: paid,
       payable: payable,
@@ -259,6 +264,7 @@
       rows.push(money(dLabel, -t.discount, 'trow--minus'));
     }
     if (t.vat > 0) rows.push(money('مالیات بر ارزش افزوده (' + Fa.toFaDigits(t.vatPercent) + '٪)', t.vat));
+    if (t.shippingEnabled && t.shipping > 0) rows.push(money('هزینه حمل و نقل', t.shipping));
     if (t.prevBalance !== 0) rows.push(money('مانده قبلی', t.prevBalance));
     if (t.paid !== 0) rows.push(money('پرداخت شده', -t.paid, 'trow--minus'));
     rows.push(money('قابل پرداخت', t.payable, 'trow--grand'));
@@ -406,7 +412,12 @@
 
   /* ───────────────── همگام‌سازی فرم ───────────────── */
 
-  var MONEY_PATHS = ['totals.prevBalance', 'totals.discountValue', 'totals.paid'];
+  var MONEY_PATHS = ['totals.prevBalance', 'totals.discountValue', 'totals.paid', 'totals.shippingValue'];
+
+  function updateShippingVisibility() {
+    var f = $('#fieldShipping');
+    if (f) f.style.display = state.options.showShipping ? '' : 'none';
+  }
 
   function fillForm() {
     $$('[data-path]').forEach(function (el) {
@@ -422,6 +433,7 @@
         el.value = value == null ? '' : value;
       }
     });
+    updateShippingVisibility();
   }
 
   function readInput(el) {
@@ -465,6 +477,7 @@
     var el = e.target;
     if (el.type === 'checkbox' && el.dataset.path) {
       setPath(state, el.dataset.path, el.checked);
+      if (el.dataset.path === 'options.showShipping') updateShippingVisibility();
       renderPreview();
       save();
     }
