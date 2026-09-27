@@ -656,12 +656,8 @@
     if (!number && !buyerName) return; // فاکتور خالی آرشیو نمی‌شود
 
     var t = computeTotals();
-    var list = loadArchive();
-    var key = Fa.toLatinDigits(number);
-    var idx = key ? list.findIndex(function (e) { return Fa.toLatinDigits(String(e.number || '')) === key; }) : -1;
-
     var entry = {
-      id: idx > -1 ? list[idx].id : String(Date.now()) + Math.random().toString(36).slice(2, 7),
+      id: Fa.toLatinDigits(number) || ('id-' + Date.now()),
       number: state.invoice.number,
       date: { y: state.invoice.date.y, m: state.invoice.date.m, d: state.invoice.date.d },
       buyerName: buyerName || 'بدون نام',
@@ -671,36 +667,59 @@
       state: JSON.parse(JSON.stringify(state))
     };
 
-    if (idx > -1) list[idx] = entry; else list.unshift(entry);
+    upsertContact(state.buyer);
+
+    if (archiveDirHandle) {
+      writeInvoiceToFolder(entry).then(renderArchiveList);
+      return;
+    }
+
+    var list = loadArchive();
+    var key = Fa.toLatinDigits(number);
+    var idx = -1;
+    if (key) {
+      for (var i = 0; i < list.length; i++) {
+        if (Fa.toLatinDigits(String(list[i].number || '')) === key) { idx = i; break; }
+      }
+    }
+    if (idx > -1) { entry.id = list[idx].id; list[idx] = entry; } else { list.unshift(entry); }
     list.sort(function (a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
     if (list.length > ARCHIVE_LIMIT) list = list.slice(0, ARCHIVE_LIMIT);
     saveArchive(list);
-
-    upsertContact(state.buyer);
     renderArchiveList();
-    scheduleSyncPush();
+  }
+
+  /** آرشیو را می‌خواند: اگر پوشه‌ای وصل باشد از همان‌جا، وگرنه از حافظه‌ی مرورگر */
+  function getArchiveList() {
+    if (archiveDirHandle) return readFolderEntries();
+    return Promise.resolve(loadArchive());
   }
 
   function renderArchiveList() {
     var wrap = $('#archiveList');
     var empty = $('#archiveEmptyMsg');
-    if (!wrap) return;
-    var list = loadArchive();
-
-    if (empty) empty.hidden = list.length > 0;
-    wrap.innerHTML = list.map(function (e) {
-      return '<div class="archive-item">' +
-        '<div class="archive-item__info">' +
-        '<span class="archive-item__name">' + escapeHtml(e.buyerName || 'بدون نام') + '</span>' +
-        '<span class="archive-item__meta">شماره ' + escapeHtml(Fa.toFaDigits(String(e.number || '—'))) +
-        ' · ' + jalaliShort(e.date) + ' · ' + Fa.formatMoney(e.payable) + ' ' + escapeHtml(e.currency || '') + '</span>' +
-        '</div>' +
-        '<div class="archive-item__actions">' +
-        '<button type="button" class="btn btn--mini" data-archive-open="' + e.id + '">بازکردن</button>' +
-        '<button type="button" class="btn btn--mini btn--danger-ghost" data-archive-del="' + e.id + '">حذف</button>' +
-        '</div>' +
-        '</div>';
-    }).join('');
+    if (!wrap) return Promise.resolve();
+    return getArchiveList().then(function (list) {
+      list = list.slice().sort(function (a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
+      if (empty) empty.hidden = list.length > 0;
+      wrap.innerHTML = list.map(function (e) {
+        return '<div class="archive-item">' +
+          '<div class="archive-item__info">' +
+          '<span class="archive-item__name">' + escapeHtml(e.buyerName || 'بدون نام') + '</span>' +
+          '<span class="archive-item__meta">شماره ' + escapeHtml(Fa.toFaDigits(String(e.number || '—'))) +
+          ' · ' + jalaliShort(e.date) + ' · ' + Fa.formatMoney(e.payable) + ' ' + escapeHtml(e.currency || '') + '</span>' +
+          '</div>' +
+          '<div class="archive-item__actions">' +
+          '<button type="button" class="btn btn--mini" data-archive-open="' + escapeHtml(String(e.id)) + '">بازکردن</button>' +
+          '<button type="button" class="btn btn--mini btn--danger-ghost" data-archive-del="' + escapeHtml(String(e.id)) + '">حذف</button>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+    }).catch(function (err) {
+      console.error(err);
+      wrap.innerHTML = '';
+      if (empty) { empty.hidden = false; empty.textContent = 'خواندن آرشیو از پوشه ممکن نشد؛ اتصال پوشه را بررسی کنید.'; }
+    });
   }
 
   function openArchiveModal() {
@@ -729,20 +748,33 @@
 
       var openBtn = e.target.closest('[data-archive-open]');
       if (openBtn) {
-        var entry = loadArchive().filter(function (x) { return x.id === openBtn.dataset.archiveOpen; })[0];
-        if (entry && confirm('فاکتور فعلی جایگزین می‌شود. اگر فاکتور فعلی را آرشیو نکرده‌اید، اطلاعاتش از دست می‌رود. ادامه می‌دهید؟')) {
+        var openId = openBtn.dataset.archiveOpen;
+        getArchiveList().then(function (list) {
+          return list.filter(function (x) { return String(x.id) === openId; })[0];
+        }).then(function (entry) {
+          if (!entry) { alert('این فاکتور پیدا نشد.'); return; }
+          if (!confirm('فاکتور فعلی جایگزین می‌شود. اگر فاکتور فعلی را آرشیو نکرده‌اید، اطلاعاتش از دست می‌رود. ادامه می‌دهید؟')) return;
           state = merge(defaultState(), JSON.parse(JSON.stringify(entry.state)));
           renderAll();
           save();
           closeArchiveModal();
-        }
+        }).catch(function (err) { console.error(err); alert('باز کردن فاکتور ممکن نشد.'); });
         return;
       }
 
       var delBtn = e.target.closest('[data-archive-del]');
-      if (delBtn && confirm('این فاکتور از آرشیو حذف شود؟')) {
-        saveArchive(loadArchive().filter(function (x) { return x.id !== delBtn.dataset.archiveDel; }));
-        renderArchiveList();
+      if (delBtn) {
+        var delId = delBtn.dataset.archiveDel;
+        if (!confirm('این فاکتور از آرشیو حذف شود؟')) return;
+        if (archiveDirHandle) {
+          getArchiveList().then(function (list) {
+            var entry = list.filter(function (x) { return String(x.id) === delId; })[0];
+            return entry ? archiveDirHandle.removeEntry(archiveFileName(entry)) : null;
+          }).then(renderArchiveList).catch(function (err) { console.error(err); alert('حذف فایل از پوشه ممکن نشد.'); });
+        } else {
+          saveArchive(loadArchive().filter(function (x) { return x.id !== delId; }));
+          renderArchiveList();
+        }
       }
     });
 
@@ -819,146 +851,206 @@
     fillForm();
   }
 
-  /* ───────────────── همگام‌سازی با گیت‌هاب (پشتیبان مشترک) ─────────────────
-     اختیاری: اگر یک Personal Access Token با دسترسی Contents: Read & Write
-     روی همین مخزن ذخیره شود، آرشیو فاکتورها و مخاطبین به‌صورت دو فایل JSON
-     در خودِ ریپو هم نگه داشته می‌شوند (data/archive.json و data/contacts.json)
-     تا با پاک شدن اطلاعات مرورگر یا تعویض دستگاه از بین نروند. توکن فقط در
-     همین مرورگر (localStorage) نگه‌داری می‌شود و به هیچ سرویس دیگری فرستاده
-     نمی‌شود؛ فقط مستقیماً به api.github.com. */
+  /* ───────────────── پوشه‌ی آرشیو روی دستگاه (File System Access API) ─────────────────
+     اختیاری: اگر کاربر یک پوشه را انتخاب کند (فقط در کروم/اِج، دسکتاپ و اندروید)،
+     هر فاکتور به‌عنوان یک فایل JSON جداگانه در همان پوشه ذخیره می‌شود و لیست آرشیو
+     مستقیماً از همان پوشه خوانده می‌شود. چون این فایل‌ها روی دیسک هستند نه داخل
+     localStorage، با پاک شدن اطلاعات یا حتی حذف/نصب دوباره‌ی برنامه از بین نمی‌روند؛
+     کافی‌ست دوباره همان پوشه انتخاب/وصل شود. دسته‌ی پوشه (handle) برای دفعات بعد در
+     IndexedDB نگه داشته می‌شود (چون در localStorage قابل ذخیره نیست). در مرورگرهایی
+     که این قابلیت را ندارند (مثل سافاری/آیفون)، آرشیو فقط در همین مرورگر
+     (localStorage) ذخیره می‌شود؛ کد قبلی مربوط به آن دست‌نخورده باقی مانده است. */
 
-  var GH_OWNER = 'qaradagh';
-  var GH_REPO = 'Sales-invoice';
-  var GH_BRANCH = 'main';
-  var GH_TOKEN_KEY = 'shilan-gh-token';
-  var GH_ARCHIVE_PATH = 'data/archive.json';
-  var GH_CONTACTS_PATH = 'data/contacts.json';
+  var FOLDER_DB_NAME = 'shilan-invoice-fs';
+  var FOLDER_DB_STORE = 'handles';
+  var FOLDER_DB_KEY = 'archiveDir';
 
-  function ghToken() {
-    try { return localStorage.getItem(GH_TOKEN_KEY) || ''; } catch (e) { return ''; }
+  var archiveDirHandle = null;
+  var pendingFolderHandle = null;
+
+  function folderSupported() { return typeof window.showDirectoryPicker === 'function'; }
+
+  function idbOpen() {
+    return new Promise(function (resolve, reject) {
+      var req = indexedDB.open(FOLDER_DB_NAME, 1);
+      req.onupgradeneeded = function () { req.result.createObjectStore(FOLDER_DB_STORE); };
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror = function () { reject(req.error); };
+    });
   }
-
-  function utf8ToBase64(str) { return btoa(unescape(encodeURIComponent(str))); }
-  function base64ToUtf8(str) { return decodeURIComponent(escape(atob(str))); }
-
-  function ghRequest(path, opts) {
-    opts = opts || {};
-    var headers = { 'Authorization': 'Bearer ' + ghToken(), 'Accept': 'application/vnd.github+json' };
-    if (opts.headers) { for (var k in opts.headers) headers[k] = opts.headers[k]; }
-    var url = 'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + path;
-    return fetch(url, { method: opts.method || 'GET', headers: headers, body: opts.body });
+  function idbSet(key, value) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(FOLDER_DB_STORE, 'readwrite');
+        tx.objectStore(FOLDER_DB_STORE).put(value, key);
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { reject(tx.error); };
+      });
+    });
   }
-
-  function ghGetJson(path) {
-    return ghRequest(path + '?ref=' + GH_BRANCH).then(function (res) {
-      if (res.status === 404) return { sha: null, data: null };
-      if (!res.ok) throw new Error('خطای گیت‌هاب ' + res.status);
-      return res.json().then(function (body) {
-        return { sha: body.sha, data: JSON.parse(base64ToUtf8(body.content.replace(/\n/g, ''))) };
+  function idbGet(key) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(FOLDER_DB_STORE, 'readonly');
+        var req = tx.objectStore(FOLDER_DB_STORE).get(key);
+        req.onsuccess = function () { resolve(req.result || null); };
+        req.onerror = function () { reject(req.error); };
+      });
+    });
+  }
+  function idbDelete(key) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(FOLDER_DB_STORE, 'readwrite');
+        tx.objectStore(FOLDER_DB_STORE).delete(key);
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { reject(tx.error); };
       });
     });
   }
 
-  function ghPutJson(path, data, sha, message) {
-    return ghRequest(path, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: message,
-        content: utf8ToBase64(JSON.stringify(data, null, 2)),
-        branch: GH_BRANCH,
-        sha: sha || undefined
-      })
-    }).then(function (res) {
-      if (!res.ok) throw new Error('خطای گیت‌هاب ' + res.status);
-      return res.json();
-    });
-  }
-
-  function mergeArchiveLists(a, b) {
-    var map = {};
-    a.concat(b).forEach(function (e) {
-      if (!e || !e.id) return;
-      var existing = map[e.id];
-      if (!existing || (e.savedAt || 0) > (existing.savedAt || 0)) map[e.id] = e;
-    });
-    var list = Object.keys(map).map(function (k) { return map[k]; });
-    list.sort(function (x, y) { return (y.savedAt || 0) - (x.savedAt || 0); });
-    if (list.length > ARCHIVE_LIMIT) list = list.slice(0, ARCHIVE_LIMIT);
-    return list;
-  }
-
-  function mergeContactLists(a, b) {
-    var map = {};
-    a.concat(b).forEach(function (c) {
-      if (!c || !c.name) return;
-      var key = String(c.name).trim().toLowerCase();
-      var existing = map[key];
-      if (!existing || (c.lastUsed || 0) > (existing.lastUsed || 0)) map[key] = c;
-    });
-    return Object.keys(map).map(function (k) { return map[k]; });
-  }
-
-  function setSyncStatus(text) {
-    var el = $('#syncStatus');
+  function setFolderStatus(text) {
+    var el = $('#folderStatus');
     if (el) el.textContent = text;
   }
 
-  function syncPush() {
-    if (!ghToken()) return;
-    setSyncStatus('در حال همگام‌سازی…');
-    Promise.all([ghGetJson(GH_ARCHIVE_PATH), ghGetJson(GH_CONTACTS_PATH)])
-      .then(function (res) {
-        var mergedArchive = mergeArchiveLists(loadArchive(), res[0].data || []);
-        var mergedContacts = mergeContactLists(loadContacts(), res[1].data || []);
-        saveArchive(mergedArchive);
-        saveContacts(mergedContacts);
-        renderArchiveList();
-        renderContactsDatalist();
-        return Promise.all([
-          ghPutJson(GH_ARCHIVE_PATH, mergedArchive, res[0].sha, 'به‌روزرسانی آرشیو فاکتورها'),
-          ghPutJson(GH_CONTACTS_PATH, mergedContacts, res[1].sha, 'به‌روزرسانی مخاطبین خریدار')
-        ]);
+  function setFolderButtons(mode) {
+    var pickBtn = $('#btnPickFolder');
+    var reconnectBtn = $('#btnReconnectFolder');
+    var unlinkBtn = $('#btnUnlinkFolder');
+    if (pickBtn) pickBtn.hidden = mode === 'unsupported';
+    if (reconnectBtn) reconnectBtn.hidden = mode !== 'pending';
+    if (unlinkBtn) unlinkBtn.hidden = mode !== 'connected';
+  }
+
+  /** نام فایل هر فاکتور در پوشه: بر پایه‌ی شماره‌ی فاکتور (پایدار، برای جلوگیری از تکرار) */
+  function archiveFileName(entry) {
+    var num = Fa.safeFileText(Fa.toLatinDigits(String(entry.number || '')));
+    if (num && /^\d+$/.test(num)) return num.padStart(4, '0') + '.json';
+    if (num) return (Fa.safeFileText(num) || 'فاکتور') + '.json';
+    return 'id-' + entry.id + '.json';
+  }
+
+  function writeInvoiceToFolder(entry) {
+    if (!archiveDirHandle) return Promise.resolve();
+    return archiveDirHandle.getFileHandle(archiveFileName(entry), { create: true })
+      .then(function (fh) { return fh.createWritable(); })
+      .then(function (writable) {
+        return writable.write(JSON.stringify(entry, null, 2)).then(function () { return writable.close(); });
       })
-      .then(function () { setSyncStatus('آخرین همگام‌سازی: ' + new Date().toLocaleTimeString('fa-IR')); })
       .catch(function (err) {
         console.error(err);
-        setSyncStatus('همگام‌سازی ناموفق بود؛ توکن و اتصال اینترنت را بررسی کنید');
+        setFolderStatus('نوشتن فایل در پوشه ناموفق بود؛ اتصال پوشه را بررسی کنید');
       });
   }
 
-  var syncTimer = null;
-  function scheduleSyncPush() {
-    if (!ghToken()) return;
-    clearTimeout(syncTimer);
-    syncTimer = setTimeout(syncPush, 1200);
+  function readFolderEntries() {
+    if (!archiveDirHandle) return Promise.resolve([]);
+    var out = [];
+    var it = archiveDirHandle.entries();
+    function step() {
+      return it.next().then(function (res) {
+        if (res.done) return out;
+        var name = res.value[0];
+        var handle = res.value[1];
+        if (handle.kind === 'file' && /\.json$/i.test(name)) {
+          return handle.getFile()
+            .then(function (file) { return file.text(); })
+            .then(function (text) {
+              try {
+                var entry = JSON.parse(text);
+                if (entry && entry.buyerName !== undefined) out.push(entry);
+              } catch (e) { /* فایل خراب — نادیده گرفته می‌شود */ }
+              return step();
+            });
+        }
+        return step();
+      });
+    }
+    return step();
   }
 
-  (function wireSyncBox() {
-    var tokenInput = $('#ghTokenInput');
-    var saveBtn = $('#btnGhSave');
-    var clearBtn = $('#btnGhClear');
-    var syncNowBtn = $('#btnGhSyncNow');
-    if (!tokenInput) return;
+  /** یک‌بار، هنگام اتصال پوشه‌ی جدید: آرشیو موجود در حافظه‌ی مرورگر هم داخل پوشه کپی می‌شود */
+  function migrateLocalArchiveIntoFolder() {
+    var list = loadArchive();
+    return list.reduce(function (p, entry) {
+      return p.then(function () { return writeInvoiceToFolder(entry); });
+    }, Promise.resolve());
+  }
 
-    if (ghToken()) {
-      tokenInput.value = ghToken();
-      setSyncStatus('متصل — برای همگام‌سازی «همگام‌سازی الان» را بزنید');
+  function connectFolder(handle) {
+    archiveDirHandle = handle;
+    pendingFolderHandle = null;
+    setFolderStatus('متصل به پوشه‌ی «' + handle.name + '»');
+    setFolderButtons('connected');
+    return idbSet(FOLDER_DB_KEY, handle)
+      .then(migrateLocalArchiveIntoFolder)
+      .then(renderArchiveList);
+  }
+
+  function pickFolder() {
+    if (!folderSupported()) {
+      alert('این مرورگر از انتخاب پوشه پشتیبانی نمی‌کند؛ از کروم یا اِج روی اندروید یا کامپیوتر استفاده کنید.');
+      return;
     }
+    window.showDirectoryPicker({ mode: 'readwrite' })
+      .then(connectFolder)
+      .catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        console.error(err);
+        alert('انتخاب پوشه ممکن نشد.');
+      });
+  }
 
-    if (saveBtn) saveBtn.addEventListener('click', function () {
-      var v = tokenInput.value.trim();
-      try { if (v) localStorage.setItem(GH_TOKEN_KEY, v); else localStorage.removeItem(GH_TOKEN_KEY); } catch (e) { /* بی‌اهمیت */ }
-      if (v) syncPush(); else setSyncStatus('متصل نیست');
+  function reconnectFolder() {
+    if (!pendingFolderHandle) return;
+    pendingFolderHandle.requestPermission({ mode: 'readwrite' }).then(function (perm) {
+      if (perm === 'granted') connectFolder(pendingFolderHandle);
+      else setFolderStatus('اجازه داده نشد — می‌توانید دوباره تلاش کنید یا پوشه‌ی دیگری انتخاب کنید');
     });
+  }
 
-    if (clearBtn) clearBtn.addEventListener('click', function () {
-      try { localStorage.removeItem(GH_TOKEN_KEY); } catch (e) { /* بی‌اهمیت */ }
-      tokenInput.value = '';
-      setSyncStatus('متصل نیست');
+  function unlinkFolder() {
+    archiveDirHandle = null;
+    pendingFolderHandle = null;
+    idbDelete(FOLDER_DB_KEY).then(function () {
+      setFolderStatus('پوشه‌ای وصل نیست — فاکتورها فقط در همین مرورگر ذخیره می‌شوند');
+      setFolderButtons('none');
+      renderArchiveList();
     });
+  }
 
-    if (syncNowBtn) syncNowBtn.addEventListener('click', syncPush);
+  function restoreFolderHandle() {
+    if (!folderSupported()) {
+      setFolderStatus('این مرورگر از پوشه‌ی آرشیو پشتیبانی نمی‌کند؛ فاکتورها فقط در همین مرورگر ذخیره می‌شوند');
+      setFolderButtons('unsupported');
+      return Promise.resolve();
+    }
+    return idbGet(FOLDER_DB_KEY).then(function (handle) {
+      if (!handle) {
+        setFolderStatus('پوشه‌ای وصل نیست — فاکتورها فقط در همین مرورگر ذخیره می‌شوند');
+        setFolderButtons('none');
+        return;
+      }
+      return handle.queryPermission({ mode: 'readwrite' }).then(function (perm) {
+        if (perm === 'granted') return connectFolder(handle);
+        pendingFolderHandle = handle;
+        setFolderStatus('برای اتصال به پوشه‌ی قبلی («' + handle.name + '»)، «اتصال به پوشه قبلی» را بزنید');
+        setFolderButtons('pending');
+      });
+    }).catch(function () {
+      setFolderStatus('پوشه‌ای وصل نیست — فاکتورها فقط در همین مرورگر ذخیره می‌شوند');
+      setFolderButtons('none');
+    });
+  }
+
+  (function wireFolderBox() {
+    var pickBtn = $('#btnPickFolder');
+    var reconnectBtn = $('#btnReconnectFolder');
+    var unlinkBtn = $('#btnUnlinkFolder');
+    if (pickBtn) pickBtn.addEventListener('click', pickFolder);
+    if (reconnectBtn) reconnectBtn.addEventListener('click', reconnectFolder);
+    if (unlinkBtn) unlinkBtn.addEventListener('click', unlinkFolder);
   })();
 
   /* ───────────────── ذخیره‌سازی ───────────────── */
@@ -1005,7 +1097,7 @@
     buildMonthSelect();
     load();
     renderContactsDatalist();
-    if (ghToken()) syncPush();
+    restoreFolderHandle();
     applyZoomLabel();
     updateTopbarHeight();
     renderAll();

@@ -420,22 +420,21 @@
 
     <h2 class="modal__title" id="archiveTitle">آرشیو فاکتورها</h2>
 
-    <div class="sync-box" id="syncBox">
-      <p class="sync-box__title">همگام‌سازی با گیت‌هاب (qaradagh/Sales-invoice)</p>
+    <div class="sync-box" id="folderBox">
+      <p class="sync-box__title">پوشه‌ی آرشیو روی این دستگاه</p>
       <p class="sync-box__hint">
-        با وارد کردن یک Personal Access Token با دسترسی نوشتن به این ریپو، آرشیو و مخاطبین
-        در فایل‌های <code>data/archive.json</code> و <code>data/contacts.json</code> همان‌جا هم
-        ذخیره می‌شوند و با پاک شدن اطلاعات مرورگر یا تعویض دستگاه از بین نمی‌روند.
-        توکن فقط همین‌جا (روی همین مرورگر) نگه داشته می‌شود.
+        یک پوشه روی گوشی یا کامپیوترتان انتخاب کنید؛ از این به بعد هر فاکتور به‌صورت یک فایل
+        در همان پوشه ذخیره می‌شود. این فایل‌ها مستقل از برنامه‌اند، پس با پاک شدن اطلاعات
+        برنامه از بین نمی‌روند — کافی‌ست دوباره همان پوشه را وصل کنید تا آرشیو برگردد.
+        (فقط در کروم/اِج روی اندروید و کامپیوتر کار می‌کند؛ در سافاری/آیفون در دسترس نیست.)
       </p>
       <div class="sync-box__row">
-        <input type="password" id="ghTokenInput" placeholder="github_pat_…" autocomplete="off" />
-        <button type="button" class="btn btn--mini" id="btnGhSave">ذخیره توکن</button>
-        <button type="button" class="btn btn--mini btn--danger-ghost" id="btnGhClear">قطع اتصال</button>
+        <span class="sync-box__status" id="folderStatus">در حال بررسی…</span>
       </div>
       <div class="sync-box__row">
-        <span class="sync-box__status" id="syncStatus">متصل نیست</span>
-        <button type="button" class="btn btn--mini" id="btnGhSyncNow">همگام‌سازی الان</button>
+        <button type="button" class="btn btn--mini" id="btnPickFolder">انتخاب پوشه</button>
+        <button type="button" class="btn btn--mini" id="btnReconnectFolder" hidden>اتصال به پوشه قبلی</button>
+        <button type="button" class="btn btn--mini btn--danger-ghost" id="btnUnlinkFolder" hidden>قطع اتصال</button>
       </div>
     </div>
 
