@@ -212,6 +212,8 @@
   function renderPreview() {
     var t = computeTotals();
     var cur = state.invoice.currency;
+    setOut('invoice.currency', cur);
+    $('#editorPayable').textContent = Fa.formatMoney(t.payable) + ' ' + cur;
 
     ['seller.name', 'seller.tagline', 'seller.phone', 'seller.address', 'seller.regNo',
       'seller.iban', 'seller.account', 'seller.bank',
@@ -395,7 +397,8 @@
     if (!stacked.matches && zoomMode === 'fit') {
       var availableH = previewWrap.clientHeight
         - parseFloat(styles.paddingTop || 0)
-        - parseFloat(styles.paddingBottom || 0);
+        - parseFloat(styles.paddingBottom || 0)
+        - $('.preview-toolbar').offsetHeight - 20;
       if (availableH > 0) scale = Math.min(scale, availableH / A4_HEIGHT_PX);
     }
 
@@ -598,6 +601,7 @@
     head.addEventListener('click', function () {
       var card = head.parentElement;
       card.dataset.open = card.dataset.open === 'true' ? 'false' : 'true';
+      head.setAttribute('aria-expanded', card.dataset.open);
     });
   });
 
@@ -722,12 +726,15 @@
     });
   }
 
+  var archiveOpener = null;
   function openArchiveModal() {
+    archiveOpener = document.activeElement;
     renderArchiveList();
     var modal = $('#archiveModal');
     if (!modal) return;
     modal.hidden = false;
     document.body.style.overflow = 'hidden';
+    modal.querySelector('[data-archive-close].modal__close').focus();
   }
 
   function closeArchiveModal() {
@@ -735,6 +742,7 @@
     if (!modal) return;
     modal.hidden = true;
     document.body.style.overflow = '';
+    if (archiveOpener && archiveOpener.focus) archiveOpener.focus();
   }
 
   (function wireArchiveModal() {
@@ -1058,8 +1066,17 @@
   var saveTimer = null;
   function save() {
     clearTimeout(saveTimer);
+    $('#saveStatus').textContent = 'در حال ذخیره…';
+    $('#saveStatus').dataset.state = 'pending';
     saveTimer = setTimeout(function () {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* بی‌اهمیت */ }
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        $('#saveStatus').textContent = 'تغییرات روی این دستگاه ذخیره شد';
+        $('#saveStatus').dataset.state = 'saved';
+      } catch (e) {
+        $('#saveStatus').textContent = 'ذخیره نشد؛ از منوی فایل، فایل را ذخیره کنید';
+        $('#saveStatus').dataset.state = 'error';
+      }
     }, 250);
   }
 

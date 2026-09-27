@@ -47,7 +47,7 @@
     if (cache.styles) return Promise.resolve(cache.styles);
 
     return Promise.all([
-      fetch('assets/css/app.css').then(function (r) { return r.text(); }),
+      fetch('assets/css/app.css?v=7').then(function (r) { return r.text(); }),
       Promise.all(FONTS.map(function (f) { return fetchDataUri(f[0]); }))
     ]).then(function (res) {
       var css = res[0].replace(/@font-face\s*\{[^}]*\}/g, '');
@@ -269,6 +269,11 @@
     if (busy) return;
     busy = true;
 
+    var exportTrigger = document.getElementById('exportTrigger');
+    var exportLabel = document.getElementById('exportLabel');
+    exportTrigger.setAttribute('aria-busy', 'true');
+    exportLabel.textContent = 'در حال ساخت…';
+
     var label = button.querySelector('.btn__label');
     var original = label ? label.textContent : '';
     if (label) label.textContent = 'در حال ساخت…';
@@ -285,6 +290,8 @@
         button.disabled = false;
         button.classList.remove('is-busy');
         if (label) label.textContent = original;
+        exportTrigger.removeAttribute('aria-busy');
+        exportLabel.textContent = 'خروجی';
       });
   }
 

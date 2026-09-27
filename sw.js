@@ -4,19 +4,21 @@
    حافظه می‌آیند. فایل‌های ثابت از حافظه می‌آیند و در پس‌زمینه به‌روز می‌شوند.
    ========================================================================== */
 
-var VERSION = 'v6';
-var CACHE = 'faktor-' + VERSION;
+var VERSION = 'v7';
+var CACHE_PREFIX = 'sales-invoice-main-' + self.registration.scope + '-';
+var CACHE = CACHE_PREFIX + VERSION;
 
 var SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './assets/css/app.css',
+  './assets/css/app.css?v=7',
   './assets/js/jalali.js',
   './assets/js/persian.js',
-  './assets/js/app.js',
-  './assets/js/export.js',
-  './assets/js/pwa.js',
+  './assets/js/app.js?v=7',
+  './assets/js/export.js?v=7',
+  './assets/js/pwa.js?v=7',
+  './assets/js/ui.js?v=7',
   './assets/img/logo.svg',
   './assets/icons/icon.svg',
   './assets/icons/icon-192.png',
@@ -43,7 +45,7 @@ self.addEventListener('activate', function (event) {
     caches.keys()
       .then(function (keys) {
         return Promise.all(keys.map(function (key) {
-          return key === CACHE ? null : caches.delete(key);
+          return key.indexOf(CACHE_PREFIX) === 0 && key !== CACHE ? caches.delete(key) : null;
         }));
       })
       .then(function () { return self.clients.claim(); })
@@ -66,8 +68,8 @@ self.addEventListener('fetch', function (event) {
           return response;
         })
         .catch(function () {
-          return caches.match('./index.html').then(function (cached) {
-            return cached || caches.match('./');
+          return caches.open(CACHE).then(function (cache) { return cache.match('./index.html'); }).then(function (cached) {
+            return cached || caches.open(CACHE).then(function (cache) { return cache.match('./'); });
           });
         })
     );
@@ -76,7 +78,7 @@ self.addEventListener('fetch', function (event) {
 
   /* بقیه فایل‌ها: از حافظه، با به‌روزرسانی در پس‌زمینه */
   event.respondWith(
-    caches.match(request).then(function (cached) {
+    caches.open(CACHE).then(function (cache) { return cache.match(request); }).then(function (cached) {
       var network = fetch(request).then(function (response) {
         if (response && response.status === 200 && response.type === 'basic') {
           var copy = response.clone();
