@@ -17,7 +17,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preload" href="assets/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/Vazirmatn-Bold.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="assets/css/app.css?v=7.0.2" />
+  <link rel="stylesheet" href="assets/css/app.css?v=7.1.0" />
 </head>
 <body data-view="edit">
 
@@ -44,7 +44,26 @@
     <div class="editor-tabs" role="tablist" aria-label="بخش‌های فاکتور"><button type="button" id="tab-details" role="tab" aria-selected="true" aria-controls="pane-details" data-tab="details">اطلاعات اصلی</button><button type="button" id="tab-items" role="tab" aria-selected="false" aria-controls="pane-items" tabindex="-1" data-tab="items">اقلام و مبالغ</button><button type="button" id="tab-settings" role="tab" aria-selected="false" aria-controls="pane-settings" tabindex="-1" data-tab="settings">تنظیمات</button></div>
     <div class="panel__scroll">
 
-      <div id="pane-details" class="editor-pane" role="tabpanel" aria-labelledby="tab-details"><section class="card" data-open="true">
+      <div id="pane-details" class="editor-pane" role="tabpanel" aria-labelledby="tab-details">
+      <section class="card quick-entry" data-open="true">
+        <button type="button" class="card__head" aria-expanded="true" aria-controls="quick-entry-body">
+          <span class="card__title">ثبت سریع با جملهٔ فارسی</span>
+          <span class="card__chev" aria-hidden="true"></span>
+        </button>
+        <div class="card__body" id="quick-entry-body">
+          <label class="field" for="quickEntryText">
+            <span class="field__label">نام خریدار، تاریخ، وزن و قیمت را بنویسید</span>
+            <textarea rows="3" id="quickEntryText" aria-describedby="quickEntryExample quickEntryHint quickEntryScope" placeholder="متن فاکتور را اینجا وارد کنید"></textarea>
+          </label>
+          <p class="quick-entry__example" id="quickEntryExample">نمونه: «اسدبهار ۹ مهر ۲ تن و ۶۹۰ و کیلویی ۲۱۰۰۰»</p>
+          <p class="field__hint quick-entry__hint" id="quickEntryHint">تاریخ بدون عنوان، تاریخ صدور است. برای تاریخ بارگیری، «بارگیری» را پیش از تاریخ بنویسید. اگر سال یا واحد پول ننویسید، سالِ تاریخ صدور و واحد پولِ انتخاب‌شده استفاده می‌شود.</p>
+          <p class="field__hint quick-entry__hint" id="quickEntryScope">وزن و قیمت در ردیف اول وارد می‌شود؛ بخش‌های ذکرنشده تغییر نمی‌کند.</p>
+          <button type="button" class="btn btn--primary" id="btnQuickEntry">وارد کردن اطلاعات</button>
+          <p class="quick-entry__status" id="quickEntryStatus" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section class="card" data-open="true">
         <button type="button" class="card__head" aria-expanded="true" aria-controls="card-body-0">
           <span class="card__title">اطلاعات فاکتور</span>
           <span class="card__chev" aria-hidden="true"></span>
@@ -64,13 +83,23 @@
             </label>
           </div>
           <div class="field">
-            <span class="field__label">تاریخ (شمسی)</span>
+            <span class="field__label">تاریخ صدور (شمسی)</span>
             <div class="date-row">
-              <input type="text" inputmode="numeric" data-path="invoice.date.y" class="date-input" aria-label="سال" placeholder="سال" />
-              <select data-path="invoice.date.m" id="monthSelect" aria-label="ماه"></select>
-              <input type="text" inputmode="numeric" data-path="invoice.date.d" class="date-input" aria-label="روز" placeholder="روز" />
+              <input type="text" inputmode="numeric" data-path="invoice.date.y" class="date-input" aria-label="سال صدور" placeholder="سال" />
+              <select data-path="invoice.date.m" id="monthSelect" aria-label="ماه صدور"></select>
+              <input type="text" inputmode="numeric" data-path="invoice.date.d" class="date-input" aria-label="روز صدور" placeholder="روز" />
               <button type="button" class="btn btn--mini" id="btnToday">امروز</button>
             </div>
+          </div>
+          <div class="field">
+            <span class="field__label">تاریخ بارگیری (شمسی، اختیاری)</span>
+            <div class="date-row" id="loadingDateRow">
+              <input type="text" inputmode="numeric" data-path="invoice.loadingDate.y" class="date-input" aria-label="سال بارگیری" placeholder="سال" />
+              <select data-path="invoice.loadingDate.m" id="loadingMonthSelect" aria-label="ماه بارگیری"><option value="">ماه</option></select>
+              <input type="text" inputmode="numeric" data-path="invoice.loadingDate.d" class="date-input" aria-label="روز بارگیری" placeholder="روز" />
+              <button type="button" class="btn btn--mini" id="btnLoadingToday">امروز</button>
+            </div>
+            <button type="button" class="btn btn--ghost btn--mini date-clear" id="btnClearLoadingDate" aria-label="پاک کردن تاریخ بارگیری">پاک کردن</button>
           </div>
         </div>
       </section>
@@ -213,6 +242,15 @@
             <span class="field__label">توضیحات</span>
             <textarea rows="3" data-path="notes" placeholder="مثلاً: تسویه حساب حداکثر تا یک هفته پس از تحویل"></textarea>
           </label>
+          <label class="field">
+            <span class="field__label">نام پایین فاکتور</span>
+            <input type="text" data-path="footer.name" />
+          </label>
+          <label class="field">
+            <span class="field__label">شماره تماس پایین فاکتور</span>
+            <input type="text" inputmode="tel" data-path="footer.phone" />
+            <span class="field__hint">این دو مقدار فقط در پایین فاکتور نمایش داده می‌شود.</span>
+          </label>
           <label class="switch">
             <input type="checkbox" data-path="options.showWords" />
             <span>نمایش مبلغ به حروف</span>
@@ -258,7 +296,8 @@
             <div class="sheet__doctitle">فاکتور فروش</div>
             <dl class="sheet__meta">
               <div class="metarow"><dt>شماره</dt><dd data-out="invoice.number"></dd></div>
-              <div class="metarow"><dt>تاریخ</dt><dd data-out="invoice.dateText"></dd></div>
+              <div class="metarow"><dt>تاریخ صدور</dt><dd data-out="invoice.dateText"></dd></div>
+              <div class="metarow" data-row="invoice.loadingDateText"><dt>بارگیری</dt><dd data-out="invoice.loadingDateText"></dd></div>
             </dl>
           </div>
         </header>
@@ -325,8 +364,8 @@
         </footer>
 
         <div class="sheet__footline">
-          <span data-out="seller.name"></span>
-          <span data-row="seller.phone"><span class="dot">•</span><span data-out="seller.phone"></span></span>
+          <span data-row="footer.name" data-out="footer.name"></span>
+          <span data-row="footer.phone"><span class="dot">•</span><span data-out="footer.phone"></span></span>
         </div>
       </article>
     </div>
@@ -418,9 +457,10 @@
 
 <script src="assets/js/jalali.js"></script>
 <script src="assets/js/persian.js"></script>
-<script src="assets/js/app.js?v=7.0.2"></script>
-<script src="assets/js/export.js?v=7.0.2"></script>
-<script src="assets/js/pwa.js?v=7.0.2"></script>
-<script src="assets/js/ui.js?v=7.0.2"></script>
+<script src="assets/js/quick-entry.js?v=7.1.0"></script>
+<script src="assets/js/app.js?v=7.1.0"></script>
+<script src="assets/js/export.js?v=7.1.0"></script>
+<script src="assets/js/pwa.js?v=7.1.0"></script>
+<script src="assets/js/ui.js?v=7.1.0"></script>
 </body>
 </html>

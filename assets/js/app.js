@@ -30,8 +30,10 @@
       invoice: {
         number: '1',
         currency: 'ریال',
-        date: { y: today.jy, m: today.jm, d: today.jd }
+        date: { y: today.jy, m: today.jm, d: today.jd },
+        loadingDate: { y: '', m: '', d: '' }
       },
+      footer: { name: 'شیلان ستور گستر', phone: '' },
       items: [{ desc: 'خوراک تخمیری', qty: '', price: '' }],
       totals: { prevBalance: '', discountType: 'amount', discountValue: '', vatPercent: '', paid: '', shippingValue: '' },
       notes: '',
@@ -78,6 +80,15 @@
       }
     });
     return base;
+  }
+
+  /** فاکتورهای قدیمی همان نام و تلفن قبلی را در پایین برگه نگه می‌دارند. */
+  function restoreState(incoming) {
+    var restored = merge(defaultState(), incoming);
+    var footer = incoming && incoming.footer;
+    if (!footer || typeof footer.name !== 'string') restored.footer.name = restored.seller.name;
+    if (!footer || typeof footer.phone !== 'string') restored.footer.phone = restored.seller.phone;
+    return restored;
   }
 
   /* ───────────────── محاسبات ───────────────── */
@@ -181,14 +192,20 @@
 
   /* ───────────────── نمایش فاکتور ───────────────── */
 
-  function dateText() {
-    var d = state.invoice.date;
+  function dateText(d, selector, optional) {
     var y = Fa.parseNum(d.y), m = Fa.parseNum(d.m), day = Fa.parseNum(d.d);
-    var valid = Jalali.isValid(y, m, day);
+    var empty = [d.y, d.m, d.d].every(function (value) { return value === '' || value == null; });
+    var valid = Number.isInteger(y) && Number.isInteger(m) && Number.isInteger(day) && Jalali.isValid(y, m, day);
 
-    var row = $('.date-row');
-    if (row) row.classList.toggle('is-invalid', !valid);
+    var row = $(selector);
+    if (row) {
+      row.classList.toggle('is-invalid', !valid && !(optional && empty));
+      $$('input, select', row).forEach(function (input) {
+        input.setAttribute('aria-invalid', String(!valid && !(optional && empty)));
+      });
+    }
 
+    if (optional && empty) return '';
     if (!valid) return '—';
     return Fa.toFaDigits(y) + '/' + Fa.toFaDigits(String(m).padStart(2, '0')) + '/' + Fa.toFaDigits(String(day).padStart(2, '0'));
   }
@@ -217,12 +234,21 @@
 
     ['seller.name', 'seller.tagline', 'seller.phone', 'seller.address', 'seller.regNo',
       'seller.iban', 'seller.account', 'seller.bank',
-      'buyer.address', 'buyer.phone', 'buyer.nationalId'].forEach(bindText);
+      'buyer.address', 'buyer.phone', 'buyer.nationalId', 'footer.name', 'footer.phone'].forEach(bindText);
+
+    var hasFooterName = !!String(state.footer.name || '').trim();
+    var hasFooterPhone = !!String(state.footer.phone || '').trim();
+    $('.sheet__footline').style.display = hasFooterName || hasFooterPhone ? '' : 'none';
+    var footerDot = $('.sheet__footline .dot');
+    if (footerDot) footerDot.style.display = hasFooterName && hasFooterPhone ? '' : 'none';
 
     setOut('buyer.name', String(state.buyer.name || '').trim() || 'خریدار محترم');
     $('#outIdLabel').textContent = state.buyer.idType === 'national' ? 'کد ملی:' : 'کد اقتصادی:';
     setOut('invoice.number', Fa.toFaDigits(String(state.invoice.number || '').trim() || '—'));
-    setOut('invoice.dateText', dateText());
+    setOut('invoice.dateText', dateText(state.invoice.date, '.date-row', false));
+    var loadingDateText = dateText(state.invoice.loadingDate, '#loadingDateRow', true);
+    setOut('invoice.loadingDateText', loadingDateText);
+    toggleRow('invoice.loadingDateText', !!loadingDateText);
 
     /* اقلام */
     var tbody = $('#outRows');
@@ -423,6 +449,10 @@
 
   var MONEY_PATHS = ['totals.prevBalance', 'totals.discountValue', 'totals.paid', 'totals.shippingValue'];
 
+  function isDatePath(path) {
+    return /^invoice\.(date|loadingDate)\.(y|m|d)$/.test(path || '');
+  }
+
   function fillForm() {
     $$('[data-path]').forEach(function (el) {
       var path = el.dataset.path;
@@ -431,7 +461,7 @@
         el.checked = !!value;
       } else if (el.hasAttribute('data-money')) {
         el.value = (value === '' || value == null) ? '' : Fa.formatMoney(value);
-      } else if (path === 'invoice.date.y' || path === 'invoice.date.d') {
+      } else if (isDatePath(path) && el.tagName !== 'SELECT') {
         el.value = value == null ? '' : Fa.toFaDigits(value);
       } else {
         el.value = value == null ? '' : value;
@@ -446,7 +476,7 @@
     if (el.hasAttribute('data-money') || MONEY_PATHS.indexOf(path) > -1) {
       return el.value.trim() === '' ? '' : Fa.parseNum(el.value);
     }
-    if (path === 'invoice.date.y' || path === 'invoice.date.m' || path === 'invoice.date.d' || path === 'totals.vatPercent') {
+    if (isDatePath(path) || path === 'totals.vatPercent') {
       return el.value.trim() === '' ? '' : Fa.parseNum(el.value);
     }
     return el.value;
@@ -495,7 +525,7 @@
       el.value = Fa.formatMoney(Fa.parseNum(el.value));
     } else if (el.dataset.item === 'qty' && el.value.trim() !== '') {
       el.value = Fa.formatQty(Fa.parseNum(el.value));
-    } else if ((el.dataset.path === 'invoice.date.y' || el.dataset.path === 'invoice.date.d') && el.value.trim() !== '') {
+    } else if (isDatePath(el.dataset.path) && el.tagName !== 'SELECT' && el.value.trim() !== '') {
       el.value = Fa.toFaDigits(Fa.parseNum(el.value));
     }
   });
@@ -548,6 +578,64 @@
     save();
   });
 
+  var loadingToday = $('#btnLoadingToday');
+  if (loadingToday) loadingToday.addEventListener('click', function () {
+    var today = Jalali.toJalaali(new Date());
+    state.invoice.loadingDate = { y: today.jy, m: today.jm, d: today.jd };
+    renderAll();
+    save();
+  });
+
+  var clearLoading = $('#btnClearLoadingDate');
+  if (clearLoading) clearLoading.addEventListener('click', function () {
+    state.invoice.loadingDate = { y: '', m: '', d: '' };
+    renderAll();
+    save();
+  });
+
+  var quickEntryButton = $('#btnQuickEntry');
+  if (quickEntryButton) quickEntryButton.addEventListener('click', function () {
+    var status = $('#quickEntryStatus');
+    var year = Fa.parseNum(state.invoice.date.y);
+    if (!Number.isInteger(year) || year < 1200 || year > 1700) year = Jalali.toJalaali(new Date()).jy;
+    var result = QuickEntry.parse($('#quickEntryText').value, { year: year });
+    if (result.errors.length) {
+      status.textContent = result.errors.join(' ');
+      status.dataset.state = 'error';
+      return;
+    }
+    var changed = [];
+    if (result.buyerName) {
+      if (String(state.buyer.name || '').trim() !== result.buyerName.trim()) {
+        state.buyer = { name: result.buyerName, address: '', phone: '', idType: 'economic', nationalId: '' };
+      }
+      applyContactAutofill(result.buyerName);
+      changed.push('نام خریدار');
+    }
+    if (result.loadingDate) {
+      state.invoice.loadingDate = result.loadingDate;
+      changed.push('تاریخ بارگیری');
+    }
+    if (result.issueDate) {
+      state.invoice.date = result.issueDate;
+      changed.push('تاریخ صدور');
+    }
+    if (result.currency) {
+      state.invoice.currency = result.currency;
+      changed.push('واحد پول');
+    }
+    if (result.weightKg !== undefined || result.price !== undefined || result.description) {
+      if (!state.items.length) state.items.push({ desc: 'خوراک تخمیری', qty: '', price: '' });
+      if (result.weightKg !== undefined) { state.items[0].qty = result.weightKg; changed.push('وزن ردیف اول'); }
+      if (result.price !== undefined) { state.items[0].price = result.price; changed.push('قیمت ردیف اول'); }
+      if (result.description) { state.items[0].desc = result.description; changed.push('شرح ردیف اول'); }
+    }
+    renderAll();
+    save();
+    status.dataset.state = 'success';
+    status.textContent = changed.join('، ') + ' وارد شد. ' + (result.warnings || []).join(' ');
+  });
+
   $('#btnPrint').addEventListener('click', function () {
     recordArchive();
     window.print();
@@ -573,7 +661,7 @@
     var reader = new FileReader();
     reader.onload = function () {
       try {
-        state = merge(defaultState(), JSON.parse(reader.result));
+        state = restoreState(JSON.parse(reader.result));
         renderAll();
         save();
       } catch (err) {
@@ -587,10 +675,12 @@
   $('#btnReset').addEventListener('click', function () {
     if (!confirm('اطلاعات فاکتور فعلی پاک شود؟ (اطلاعات فروشنده حفظ می‌شود)')) return;
     var seller = state.seller;
+    var footer = state.footer;
     var options = state.options;
     var number = Fa.parseNum(state.invoice.number);
     state = defaultState();
     state.seller = seller;
+    state.footer = footer;
     state.options = options;
     if (number) state.invoice.number = number + 1;
     renderAll();
@@ -762,7 +852,7 @@
         }).then(function (entry) {
           if (!entry) { alert('این فاکتور پیدا نشد.'); return; }
           if (!confirm('فاکتور فعلی جایگزین می‌شود. اگر فاکتور فعلی را آرشیو نکرده‌اید، اطلاعاتش از دست می‌رود. ادامه می‌دهید؟')) return;
-          state = merge(defaultState(), JSON.parse(JSON.stringify(entry.state)));
+          state = restoreState(JSON.parse(JSON.stringify(entry.state)));
           renderAll();
           save();
           closeArchiveModal();
@@ -1083,19 +1173,22 @@
   function load() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) state = merge(defaultState(), JSON.parse(raw));
+      if (raw) state = restoreState(JSON.parse(raw));
     } catch (e) { /* از پیش‌فرض استفاده می‌شود */ }
   }
 
   /* ───────────────── راه‌اندازی ───────────────── */
 
   function buildMonthSelect() {
-    var select = $('#monthSelect');
-    Jalali.MONTHS.forEach(function (name, i) {
-      var opt = document.createElement('option');
-      opt.value = String(i + 1);
-      opt.textContent = name;
-      select.appendChild(opt);
+    ['#monthSelect', '#loadingMonthSelect'].forEach(function (selector) {
+      var select = $(selector);
+      if (!select) return;
+      Jalali.MONTHS.forEach(function (name, i) {
+        var opt = document.createElement('option');
+        opt.value = String(i + 1);
+        opt.textContent = name;
+        select.appendChild(opt);
+      });
     });
   }
 
