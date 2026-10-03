@@ -47,7 +47,7 @@
     if (cache.styles) return Promise.resolve(cache.styles);
 
     return Promise.all([
-      fetch('assets/css/app.css?v=7.2.0').then(function (r) { return r.text(); }),
+      fetch('assets/css/app.css?v=7.3.0').then(function (r) { return r.text(); }),
       Promise.all(FONTS.map(function (f) { return fetchDataUri(f[0]); }))
     ]).then(function (res) {
       var css = res[0].replace(/@font-face\s*\{[^}]*\}/g, '');
