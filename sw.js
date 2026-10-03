@@ -4,7 +4,7 @@
    حافظه می‌آیند. فایل‌های ثابت از حافظه می‌آیند و در پس‌زمینه به‌روز می‌شوند.
    ========================================================================== */
 
-var VERSION = 'v7.0.2';
+var VERSION = 'v7.1.0';
 var CACHE_PREFIX = 'sales-invoice-main-' + self.registration.scope + '-';
 var CACHE = CACHE_PREFIX + VERSION;
 
@@ -12,13 +12,14 @@ var SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './assets/css/app.css?v=7.0.2',
+  './assets/css/app.css?v=7.1.0',
   './assets/js/jalali.js',
   './assets/js/persian.js',
-  './assets/js/app.js?v=7.0.2',
-  './assets/js/export.js?v=7.0.2',
-  './assets/js/pwa.js?v=7.0.2',
-  './assets/js/ui.js?v=7.0.2',
+  './assets/js/quick-entry.js?v=7.1.0',
+  './assets/js/app.js?v=7.1.0',
+  './assets/js/export.js?v=7.1.0',
+  './assets/js/pwa.js?v=7.1.0',
+  './assets/js/ui.js?v=7.1.0',
   './assets/img/logo.svg',
   './assets/icons/icon.svg',
   './assets/icons/icon-192.png',

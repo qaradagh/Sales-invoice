@@ -115,6 +115,13 @@ button:disabled { opacity: .5; cursor: wait; }
 .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .field__label { font-size: 10.5px; color: var(--ink-2); font-weight: 500; }
 .field__hint { font-size: 9px; color: var(--muted); line-height: 1.8; }
+.quick-entry .card__body { gap: 9px; }
+.quick-entry__example { margin: 0; font-size: 10px; color: var(--ink-2); line-height: 1.9; }
+.quick-entry__hint { margin: 0; }
+.quick-entry__status { margin: 0; font-size: 10px; color: var(--ink-2); line-height: 1.8; overflow-wrap: anywhere; }
+.quick-entry__status[data-state="error"] { color: #b44038; }
+.quick-entry__status[data-state="success"] { color: var(--brand); }
+html[data-theme="dark"] .quick-entry__status[data-state="success"] { color: #b4e50d; }
 input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 9px 11px; min-height: 41px; border: 1px solid var(--line); border-radius: 4px; background: var(--field); font-size: 12px; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--brand-2); box-shadow: 0 0 0 2px #57a80f18; }
 textarea { resize: vertical; line-height: 1.7; }
@@ -126,6 +133,7 @@ select { appearance: none; padding-inline-end: 28px; background-image: url("data
 .date-input { text-align: center; padding-inline: 5px !important; }
 .date-row select { padding-inline: 7px 22px; background-position: left 6px center; }
 .date-row.is-invalid input, .date-row.is-invalid select { border-color: #b44038; }
+.date-clear { align-self: flex-start; }
 .split { display: flex; gap: 6px; }
 .split > input { flex: 1; min-width: 0; }
 .split__unit { width: 108px; flex: none; font-size: 11px; }
@@ -314,7 +322,7 @@ html[data-theme="dark"] .preview { background: #0d1510; border-color: var(--line
 .itable .c-price { width: 34mm; }
 .itable .c-sum { width: 38mm; }
 
-.itable td.c-desc { text-align: start; font-weight: 600; }
+.itable td.c-desc { text-align: center; font-weight: 600; }
 .itable td.c-qty, .itable td.c-price, .itable td.c-sum { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .itable td.c-sum { font-weight: 700; }
 
