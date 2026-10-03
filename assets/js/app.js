@@ -10,6 +10,7 @@
   var ARCHIVE_KEY = 'shilan-invoice-archive-v1';
   var CONTACTS_KEY = 'shilan-invoice-contacts-v1';
   var ARCHIVE_LIMIT = 300;
+  var DEFAULT_FOOTER_TEXT = 'شیلان ستور گستر • ۰۹۱۹۶۴۸۵۸۷۸';
 
   /* ───────────────── وضعیت پیش‌فرض ───────────────── */
 
@@ -33,7 +34,7 @@
         date: { y: today.jy, m: today.jm, d: today.jd },
         loadingDate: { y: '', m: '', d: '' }
       },
-      footer: { name: 'شیلان ستور گستر', phone: '' },
+      footer: { text: DEFAULT_FOOTER_TEXT },
       items: [{ desc: 'خوراک تخمیری', qty: '', price: '' }],
       totals: { prevBalance: '', discountType: 'amount', discountValue: '', vatPercent: '', paid: '', shippingValue: '' },
       notes: '',
@@ -82,12 +83,22 @@
     return base;
   }
 
-  /** فاکتورهای قدیمی همان نام و تلفن قبلی را در پایین برگه نگه می‌دارند. */
+  /** نام و تلفن نسخه قبلی به یک نوشته تبدیل می‌شوند؛ متن سفارشی حفظ می‌شود. */
   function restoreState(incoming) {
     var restored = merge(defaultState(), incoming);
     var footer = incoming && incoming.footer;
-    if (!footer || typeof footer.name !== 'string') restored.footer.name = restored.seller.name;
-    if (!footer || typeof footer.phone !== 'string') restored.footer.phone = restored.seller.phone;
+    if (footer && typeof footer.text === 'string') return restored;
+
+    restored.footer.text = DEFAULT_FOOTER_TEXT;
+    var legacy = footer && (typeof footer.name === 'string' || typeof footer.phone === 'string')
+      ? footer : incoming && incoming.seller;
+    if (legacy) {
+      var name = String(typeof legacy.name === 'string' ? legacy.name : restored.seller.name || '').trim();
+      var phone = String(typeof legacy.phone === 'string' ? legacy.phone : restored.seller.phone || '').trim();
+      var isDefault = name === 'شیلان ستور گستر' &&
+        (!phone || Fa.toLatinDigits(phone).replace(/\s/g, '') === '09196485878');
+      if (!isDefault) restored.footer.text = [name, phone].filter(Boolean).join(' • ');
+    }
     return restored;
   }
 
@@ -234,13 +245,9 @@
 
     ['seller.name', 'seller.tagline', 'seller.phone', 'seller.address', 'seller.regNo',
       'seller.iban', 'seller.account', 'seller.bank',
-      'buyer.address', 'buyer.phone', 'buyer.nationalId', 'footer.name', 'footer.phone'].forEach(bindText);
+      'buyer.address', 'buyer.phone', 'buyer.nationalId', 'footer.text'].forEach(bindText);
 
-    var hasFooterName = !!String(state.footer.name || '').trim();
-    var hasFooterPhone = !!String(state.footer.phone || '').trim();
-    $('.sheet__footline').style.display = hasFooterName || hasFooterPhone ? '' : 'none';
-    var footerDot = $('.sheet__footline .dot');
-    if (footerDot) footerDot.style.display = hasFooterName && hasFooterPhone ? '' : 'none';
+    $('.sheet__footline').style.display = String(state.footer.text || '').trim() ? '' : 'none';
 
     setOut('buyer.name', String(state.buyer.name || '').trim() || 'خریدار محترم');
     $('#outIdLabel').textContent = state.buyer.idType === 'national' ? 'کد ملی:' : 'کد اقتصادی:';
@@ -286,7 +293,7 @@
     }
 
     /* جمع‌بندی مبالغ
-       قرارداد کلی: هر ردیفی که مقدارش صفر/خالی باشد، اصلاً در پیش‌نمایش و چاپ فاکتور نشان داده نمی‌شود
+       قرارداد کلی: هر ردیفی که مقدارش صفر/خالی باشد، اصلا در پیش‌نمایش و چاپ فاکتور نشان داده نمی‌شود
        (همین الان برای تخفیف، مالیات، هزینه حمل و نقل، مانده قبلی و پرداخت‌شده اعمال شده).
        برای افزودن یک ردیف مبلغی جدید با همین رفتار، کافیست مثل موارد زیر یک شرط `if (مقدار !== 0)` قبل از push اضافه شود. */
     var rows = [];
@@ -336,7 +343,7 @@
   /* ───────────────── نام فایل خروجی ───────────────── */
 
   /**
-   * «شماره_تاریخ_خریدار» — مثلاً 0042_1405.05.08_احمدی
+   * «شماره_تاریخ_خریدار» — مثلا 0042_1405.05.08_احمدی
    * شماره با صفر پر می‌شود تا مرتب‌سازی حروفی در پوشه با ترتیب عددی یکی شود
    * (وگرنه فاکتور ۱۰۰ قبل از ۲ می‌آید) و ارقام لاتین‌اند تا همه‌جا درست بچینند.
    */
@@ -358,7 +365,7 @@
     return parts.length ? parts.join('_') : 'فاکتور';
   }
 
-  window.Invoice = { fileLabel: fileLabel, recordArchive: recordArchive };
+  window.Invoice = { fileLabel: fileLabel, recordArchive: recordArchive, flushSave: flushSave };
 
   function money(label, value, cls) {
     return '<div class="trow ' + (cls || '') + '">' +
@@ -399,7 +406,7 @@
   var zoomMode = 'fit';
   try { zoomMode = localStorage.getItem(ZOOM_KEY) === 'full' ? 'full' : 'fit'; } catch (e) { /* پیش‌فرض */ }
 
-  /** ارتفاع نوار بالا را اندازه می‌گیرد تا پیش‌نمایش دقیقاً زیر آن بچسبد */
+  /** ارتفاع نوار بالا را اندازه می‌گیرد تا پیش‌نمایش دقیقا زیر آن بچسبد */
   function updateTopbarHeight() {
     var bar = $('.topbar');
     if (!bar) return;
@@ -720,9 +727,9 @@
   });
 
   /* ───────────────── آرشیو فاکتورها ─────────────────
-     هر بار که فاکتور چاپ یا به PDF/PNG تبدیل می‌شود، یک نسخهٔ کامل از آن
+     هر بار که فاکتور چاپ یا به PDF/PNG تبدیل می‌شود، یک نسخه کامل از آن
      (برای بازکردن دوباره) به همراه خلاصه‌اش (خریدار، شماره، تاریخ، مبلغ)
-     در localStorage آرشیو می‌شود. اگر شماره‌ی فاکتور قبلاً آرشیو شده باشد،
+     در localStorage آرشیو می‌شود. اگر شماره‌ی فاکتور قبلا آرشیو شده باشد،
      همان ردیف به‌روزرسانی می‌شود تا با هر بار پرینت مجدد، ردیف تکراری
      ساخته نشود. */
 
@@ -950,9 +957,9 @@
   }
 
   /* ───────────────── پوشه‌ی آرشیو روی دستگاه (File System Access API) ─────────────────
-     اختیاری: اگر کاربر یک پوشه را انتخاب کند (فقط در کروم/اِج، دسکتاپ و اندروید)،
+     اختیاری: اگر کاربر یک پوشه را انتخاب کند (فقط در کروم/اج، دسکتاپ و اندروید)،
      هر فاکتور به‌عنوان یک فایل JSON جداگانه در همان پوشه ذخیره می‌شود و لیست آرشیو
-     مستقیماً از همان پوشه خوانده می‌شود. چون این فایل‌ها روی دیسک هستند نه داخل
+     مستقیما از همان پوشه خوانده می‌شود. چون این فایل‌ها روی دیسک هستند نه داخل
      localStorage، با پاک شدن اطلاعات یا حتی حذف/نصب دوباره‌ی برنامه از بین نمی‌روند؛
      کافی‌ست دوباره همان پوشه انتخاب/وصل شود. دسته‌ی پوشه (handle) برای دفعات بعد در
      IndexedDB نگه داشته می‌شود (چون در localStorage قابل ذخیره نیست). در مرورگرهایی
@@ -1088,7 +1095,7 @@
 
   function pickFolder() {
     if (!folderSupported()) {
-      alert('این مرورگر از انتخاب پوشه پشتیبانی نمی‌کند؛ از کروم یا اِج روی اندروید یا کامپیوتر استفاده کنید.');
+      alert('این مرورگر از انتخاب پوشه پشتیبانی نمی‌کند؛ از کروم یا اج روی اندروید یا کامپیوتر استفاده کنید.');
       return;
     }
     window.showDirectoryPicker({ mode: 'readwrite' })
@@ -1154,20 +1161,25 @@
   /* ───────────────── ذخیره‌سازی ───────────────── */
 
   var saveTimer = null;
+  function flushSave() {
+    clearTimeout(saveTimer);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      $('#saveStatus').textContent = 'تغییرات روی این دستگاه ذخیره شد';
+      $('#saveStatus').dataset.state = 'saved';
+      return true;
+    } catch (e) {
+      $('#saveStatus').textContent = 'ذخیره نشد؛ از منوی فایل، فایل را ذخیره کنید';
+      $('#saveStatus').dataset.state = 'error';
+      return false;
+    }
+  }
+
   function save() {
     clearTimeout(saveTimer);
     $('#saveStatus').textContent = 'در حال ذخیره…';
     $('#saveStatus').dataset.state = 'pending';
-    saveTimer = setTimeout(function () {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        $('#saveStatus').textContent = 'تغییرات روی این دستگاه ذخیره شد';
-        $('#saveStatus').dataset.state = 'saved';
-      } catch (e) {
-        $('#saveStatus').textContent = 'ذخیره نشد؛ از منوی فایل، فایل را ذخیره کنید';
-        $('#saveStatus').dataset.state = 'error';
-      }
-    }, 250);
+    saveTimer = setTimeout(flushSave, 250);
   }
 
   function load() {

@@ -1,8 +1,8 @@
 /* ==========================================================================
    خروجی PDF و PNG
-   برگه فاکتور با موتور خودِ مرورگر داخل یک تصویر SVG رندر می‌شود و سپس روی
+   برگه فاکتور با موتور خود مرورگر داخل یک تصویر SVG رندر می‌شود و سپس روی
    بوم (canvas) کشیده می‌شود. چون نتیجه یک تصویر با ابعاد دقیق A4 است، خروجی
-   روی ویندوز، اندروید و آی‌پد کاملاً یکسان است و به موتور چاپ مرورگر
+   روی ویندوز، اندروید و آی‌پد کاملا یکسان است و به موتور چاپ مرورگر
    وابسته نیست.
    ========================================================================== */
 (function () {
@@ -47,7 +47,7 @@
     if (cache.styles) return Promise.resolve(cache.styles);
 
     return Promise.all([
-      fetch('assets/css/app.css?v=7.1.0').then(function (r) { return r.text(); }),
+      fetch('assets/css/app.css?v=7.2.0').then(function (r) { return r.text(); }),
       Promise.all(FONTS.map(function (f) { return fetchDataUri(f[0]); }))
     ]).then(function (res) {
       var css = res[0].replace(/@font-face\s*\{[^}]*\}/g, '');
@@ -149,7 +149,7 @@
     });
   }
 
-  /** اگر مرورگر foreignObject را رندر نکند، بوم کاملاً سفید می‌ماند.
+  /** اگر مرورگر foreignObject را رندر نکند، بوم کاملا سفید می‌ماند.
       چند سطر در ارتفاع‌های مختلف بررسی می‌شود چون بخش‌هایی از برگه سفیدند. */
   function isBlank(ctx, canvas) {
     for (var step = 1; step <= 16; step++) {

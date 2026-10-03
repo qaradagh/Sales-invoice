@@ -17,7 +17,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preload" href="assets/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/Vazirmatn-Bold.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="assets/css/app.css?v=7.1.0" />
+  <link rel="stylesheet" href="assets/css/app.css?v=7.2.0" />
 </head>
 <body data-view="edit">
 
@@ -47,16 +47,17 @@
       <div id="pane-details" class="editor-pane" role="tabpanel" aria-labelledby="tab-details">
       <section class="card quick-entry" data-open="true">
         <button type="button" class="card__head" aria-expanded="true" aria-controls="quick-entry-body">
-          <span class="card__title">ثبت سریع با جملهٔ فارسی</span>
+          <span class="card__title">ثبت سریع با جمله فارسی</span>
           <span class="card__chev" aria-hidden="true"></span>
         </button>
         <div class="card__body" id="quick-entry-body">
           <label class="field" for="quickEntryText">
             <span class="field__label">نام خریدار، تاریخ، وزن و قیمت را بنویسید</span>
-            <textarea rows="3" id="quickEntryText" aria-describedby="quickEntryExample quickEntryHint quickEntryScope" placeholder="متن فاکتور را اینجا وارد کنید"></textarea>
+            <textarea rows="3" id="quickEntryText" aria-describedby="quickEntryExample quickEntryLoadingExample quickEntryHint quickEntryScope" placeholder="متن فاکتور را اینجا وارد کنید"></textarea>
           </label>
           <p class="quick-entry__example" id="quickEntryExample">نمونه: «اسدبهار ۹ مهر ۲ تن و ۶۹۰ و کیلویی ۲۱۰۰۰»</p>
-          <p class="field__hint quick-entry__hint" id="quickEntryHint">تاریخ بدون عنوان، تاریخ صدور است. برای تاریخ بارگیری، «بارگیری» را پیش از تاریخ بنویسید. اگر سال یا واحد پول ننویسید، سالِ تاریخ صدور و واحد پولِ انتخاب‌شده استفاده می‌شود.</p>
+          <p class="quick-entry__example" id="quickEntryLoadingExample">نمونه با تاریخ بارگیری: «اسدبهار ۱۱ مهر بارگیری ۹ مهر ۲ تن و ۶۹۰ و کیلویی ۲۱۰۰۰»</p>
+          <p class="field__hint quick-entry__hint" id="quickEntryHint">تاریخ بدون عنوان، تاریخ صدور است. برای تاریخ بارگیری، «بارگیری» را پیش از تاریخ بنویسید. اگر سال یا واحد پول ننویسید، سال تاریخ صدور و واحد پول انتخاب‌شده استفاده می‌شود.</p>
           <p class="field__hint quick-entry__hint" id="quickEntryScope">وزن و قیمت در ردیف اول وارد می‌شود؛ بخش‌های ذکرنشده تغییر نمی‌کند.</p>
           <button type="button" class="btn btn--primary" id="btnQuickEntry">وارد کردن اطلاعات</button>
           <p class="quick-entry__status" id="quickEntryStatus" role="status" aria-live="polite"></p>
@@ -240,16 +241,12 @@
         <div class="card__body" id="card-body-5">
           <label class="field">
             <span class="field__label">توضیحات</span>
-            <textarea rows="3" data-path="notes" placeholder="مثلاً: تسویه حساب حداکثر تا یک هفته پس از تحویل"></textarea>
+            <textarea rows="3" data-path="notes" placeholder="مثلا: تسویه حساب حداکثر تا یک هفته پس از تحویل"></textarea>
           </label>
           <label class="field">
-            <span class="field__label">نام پایین فاکتور</span>
-            <input type="text" data-path="footer.name" />
-          </label>
-          <label class="field">
-            <span class="field__label">شماره تماس پایین فاکتور</span>
-            <input type="text" inputmode="tel" data-path="footer.phone" />
-            <span class="field__hint">این دو مقدار فقط در پایین فاکتور نمایش داده می‌شود.</span>
+            <span class="field__label">نوشته پایین فاکتور</span>
+            <textarea rows="2" data-path="footer.text"></textarea>
+            <span class="field__hint">این نوشته فقط در پایین فاکتور نمایش داده می‌شود.</span>
           </label>
           <label class="switch">
             <input type="checkbox" data-path="options.showWords" />
@@ -271,7 +268,8 @@
       </section><section class="card app-settings" data-open="true"><h3 class="settings-title">محیط برنامه</h3><div class="settings-actions"><button type="button" class="menu-action" id="btnTheme" aria-label="تغییر تم"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18Z" fill="currentColor" stroke="none"/></svg><span class="btn__label">حالت روشن / تیره</span></button><button type="button" class="menu-action" id="btnInstall" aria-label="نصب برنامه"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg><span class="btn__label">نصب برنامه</span></button></div></section></div>
 
 
-      <div class="editor-total"><span>مبلغ قابل پرداخت</span><strong id="editorPayable">۰ ریال</strong></div><p class="panel__note" id="saveStatus" role="status">ذخیرهٔ خودکار روی این دستگاه</p>
+      <div class="editor-total"><span>مبلغ قابل پرداخت</span><strong id="editorPayable">۰ ریال</strong></div><p class="panel__note" id="saveStatus" role="status">ذخیره خودکار روی این دستگاه</p>
+      <p class="panel__note" id="appVersion"></p>
       <p class="panel__credit" dir="ltr">Designed by Masiha with <span role="img" aria-label="love">❤️</span></p>
     </div>
   </aside>
@@ -363,10 +361,7 @@
           <div class="signbox" id="outReceiver"><span>نام و امضای تحویل‌گیرنده</span></div>
         </footer>
 
-        <div class="sheet__footline">
-          <span data-row="footer.name" data-out="footer.name"></span>
-          <span data-row="footer.phone"><span class="dot">•</span><span data-out="footer.phone"></span></span>
-        </div>
+        <div class="sheet__footline" data-out="footer.text"></div>
       </article>
     </div>
   </div>
@@ -396,24 +391,24 @@
     <ul class="guide">
       <li class="guide__item" data-browser="android">
         <span class="guide__name">کروم اندروید</span>
-        <span class="guide__steps">منوی سه‌نقطه <b>⋮</b> در گوشه بالا ← گزینهٔ «افزودن به صفحهٔ اصلی» یا «Install app»</span>
+        <span class="guide__steps">منوی سه‌نقطه <b>⋮</b> در گوشه بالا ← گزینه «افزودن به صفحه اصلی» یا «Install app»</span>
       </li>
       <li class="guide__item" data-browser="ios">
         <span class="guide__name">سافاری آیفون و آی‌پد</span>
-        <span class="guide__steps">دکمهٔ اشتراک‌گذاری <svg class="guide__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg> در نوار پایین یا بالا ← «Add to Home Screen»</span>
+        <span class="guide__steps">دکمه اشتراک‌گذاری <svg class="guide__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg> در نوار پایین یا بالا ← «Add to Home Screen»</span>
       </li>
       <li class="guide__item" data-browser="firefox">
         <span class="guide__name">فایرفاکس اندروید</span>
-        <span class="guide__steps">منوی سه‌نقطه <b>⋮</b> ← «Install» یا «افزودن به صفحهٔ اصلی»</span>
+        <span class="guide__steps">منوی سه‌نقطه <b>⋮</b> ← «Install» یا «افزودن به صفحه اصلی»</span>
       </li>
       <li class="guide__item" data-browser="desktop">
-        <span class="guide__name">کروم و اِج روی کامپیوتر</span>
+        <span class="guide__name">کروم و اج روی کامپیوتر</span>
         <span class="guide__steps">آیکون نصب در انتهای نوار آدرس، یا منوی سه‌نقطه ← «Install»</span>
       </li>
     </ul>
 
     <p class="modal__note">
-      اگر صفحه را داخل مرورگر داخلی یک برنامهٔ دیگر (مثل تلگرام یا اینستاگرام)
+      اگر صفحه را داخل مرورگر داخلی یک برنامه دیگر (مثل تلگرام یا اینستاگرام)
       باز کرده‌اید، اول آن را در کروم یا سافاری باز کنید.
     </p>
   </div>
@@ -436,7 +431,7 @@
         یک پوشه روی گوشی یا کامپیوترتان انتخاب کنید؛ از این به بعد هر فاکتور به‌صورت یک فایل
         در همان پوشه ذخیره می‌شود. این فایل‌ها مستقل از برنامه‌اند، پس با پاک شدن اطلاعات
         برنامه از بین نمی‌روند — کافی‌ست دوباره همان پوشه را وصل کنید تا آرشیو برگردد.
-        (فقط در کروم/اِج روی اندروید و کامپیوتر کار می‌کند؛ در سافاری/آیفون در دسترس نیست.)
+        (فقط در کروم/اج روی اندروید و کامپیوتر کار می‌کند؛ در سافاری/آیفون در دسترس نیست.)
       </p>
       <div class="sync-box__row">
         <span class="sync-box__status" id="folderStatus">در حال بررسی…</span>
@@ -457,10 +452,10 @@
 
 <script src="assets/js/jalali.js"></script>
 <script src="assets/js/persian.js"></script>
-<script src="assets/js/quick-entry.js?v=7.1.0"></script>
-<script src="assets/js/app.js?v=7.1.0"></script>
-<script src="assets/js/export.js?v=7.1.0"></script>
-<script src="assets/js/pwa.js?v=7.1.0"></script>
-<script src="assets/js/ui.js?v=7.1.0"></script>
+<script src="assets/js/quick-entry.js?v=7.2.0"></script>
+<script src="assets/js/app.js?v=7.2.0"></script>
+<script src="assets/js/export.js?v=7.2.0"></script>
+<script src="assets/js/pwa.js?v=7.2.0"></script>
+<script src="assets/js/ui.js?v=7.2.0"></script>
 </body>
 </html>
