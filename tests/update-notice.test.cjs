@@ -96,13 +96,13 @@ test('old query or saved version announces the already-loaded release without re
     const p = page(options);
     await settle();
     assert.equal(p.nodes.updateNotice.hidden, false);
-    assert.match(p.nodes.updateNoticeMessage.textContent, /7\.2\.0/);
+    assert.match(p.nodes.updateNoticeMessage.textContent, /7\.3\.0/);
     assert.equal(p.nodes.btnApplyUpdate.textContent, 'ادامه');
     p.nodes.btnApplyUpdate.emit('click');
     assert.equal(p.nodes.updateNotice.hidden, true);
     assert.equal(p.reloads, 0);
     assert.equal(p.flushes, 0);
-    assert.equal(p.localStorage.getItem(seenKey), '7.2.0');
+    assert.equal(p.localStorage.getItem(seenKey), '7.3.0');
     assert.equal(p.serviceWorker.registrationArgs[1].updateViaCache, 'none');
     const reopened = page({ url: p.location.href, localStorage: p.localStorage });
     await settle();
@@ -115,34 +115,34 @@ test('acknowledging a stale query preserves unrelated query parameters and fragm
   await settle();
   p.nodes.btnApplyUpdate.emit('click');
   const url = new URL(p.location.href);
-  assert.equal(url.searchParams.get('v'), '7.2.0');
+  assert.equal(url.searchParams.get('v'), '7.3.0');
   assert.equal(url.searchParams.get('customer'), '123');
   assert.equal(url.hash, '#draft');
 });
 
 test('a waiting worker supplies its own target version and dismissal is per release', async () => {
   const local = storage();
-  const p = page({ waiting: worker('v7.2.1'), localStorage: local });
+  const p = page({ waiting: worker('v7.3.1'), localStorage: local });
   await settle();
-  assert.match(p.nodes.updateNoticeMessage.textContent, /7\.2\.1/);
+  assert.match(p.nodes.updateNoticeMessage.textContent, /7\.3\.1/);
   p.nodes.updateNoticeSuppress.checked = true;
   p.nodes.updateNoticeSuppress.emit('change');
   p.nodes.btnDismissUpdate.emit('click');
-  assert.equal(local.getItem(dismissedKey), '7.2.1');
+  assert.equal(local.getItem(dismissedKey), '7.3.1');
   p.window.emit('focus');
   await settle();
   assert.equal(p.nodes.updateNotice.hidden, true);
-  const reopen = page({ waiting: worker('v7.2.1'), localStorage: local });
+  const reopen = page({ waiting: worker('v7.3.1'), localStorage: local });
   await settle();
   assert.equal(reopen.nodes.updateNotice, undefined);
-  const nextRelease = page({ waiting: worker('v7.2.2'), localStorage: local });
+  const nextRelease = page({ waiting: worker('v7.3.2'), localStorage: local });
   await settle();
   assert.equal(nextRelease.nodes.updateNotice.hidden, false);
-  assert.match(nextRelease.nodes.updateNoticeMessage.textContent, /7\.2\.2/);
+  assert.match(nextRelease.nodes.updateNoticeMessage.textContent, /7\.3\.2/);
 });
 
 test('accepting an update saves pending edits before activation and reloads only once', async () => {
-  const waiting = worker('v7.2.1');
+  const waiting = worker('v7.3.1');
   const p = page({ waiting });
   await settle();
   p.nodes.quickEntryText.value = 'اسدبهار ۹ مهر ۲ تن';
@@ -156,11 +156,11 @@ test('accepting an update saves pending edits before activation and reloads only
   assert.equal(p.reloads, 1);
   assert.equal(p.flushes, 2);
   assert.equal(p.sessionStorage.getItem('shilan-invoice-update-quick-draft'), p.nodes.quickEntryText.value);
-  assert.equal(p.sessionStorage.getItem('shilan-invoice-update-applied-version'), '7.2.1');
+  assert.equal(p.sessionStorage.getItem('shilan-invoice-update-applied-version'), '7.3.1');
 });
 
 test('a failed draft save prevents activation and reload, keeping the draft visible', async () => {
-  const waiting = worker('v7.2.1');
+  const waiting = worker('v7.3.1');
   const p = page({ waiting, saveSucceeds: false });
   await settle();
   p.nodes.btnApplyUpdate.emit('click');
@@ -172,7 +172,7 @@ test('a failed draft save prevents activation and reload, keeping the draft visi
 });
 
 test('activation in another tab never flushes or reloads this tab', async () => {
-  const waiting = worker('v7.2.1');
+  const waiting = worker('v7.3.1');
   const p = page({ waiting });
   await settle();
   p.registration.waiting = null;
@@ -227,7 +227,7 @@ test('installation fully precaches without forced activation, and messages repor
   assert.ok(sw.precached.every(request => request.cache === 'reload'));
   let reply;
   sw.events.message({ data: { type: 'GET_VERSION' }, ports: [{ postMessage: message => { reply = message; } }] });
-  assert.deepEqual(JSON.parse(JSON.stringify(reply)), { type: 'VERSION', version: 'v7.2.0' });
+  assert.deepEqual(JSON.parse(JSON.stringify(reply)), { type: 'VERSION', version: 'v7.3.0' });
   sw.events.message({ data: { type: 'SKIP_WAITING' }, waitUntil: promise => { done = promise; } });
   await done;
   assert.equal(sw.skips, 1);

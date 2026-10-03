@@ -321,6 +321,12 @@ html[data-theme="dark"] .preview { background: #0d1510; border-color: var(--line
 .itable .c-qty { width: 26mm; }
 .itable .c-price { width: 34mm; }
 .itable .c-sum { width: 38mm; }
+.itable .c-date { width: 29mm; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.itable.has-loading-date .c-idx { width: 9mm; }
+.itable.has-loading-date .c-qty { width: 24mm; }
+.itable.has-loading-date .c-price { width: 30mm; }
+.itable.has-loading-date .c-sum { width: 34mm; }
+.itable.has-loading-date th, .itable.has-loading-date td { padding-inline: 2mm; }
 
 .itable td.c-desc { text-align: center; font-weight: 600; }
 .itable td.c-qty, .itable td.c-price, .itable td.c-sum { font-variant-numeric: tabular-nums; white-space: nowrap; }

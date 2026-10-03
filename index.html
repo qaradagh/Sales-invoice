@@ -17,7 +17,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preload" href="assets/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/Vazirmatn-Bold.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="assets/css/app.css?v=7.2.0" />
+  <link rel="stylesheet" href="assets/css/app.css?v=7.3.0" />
 </head>
 <body data-view="edit">
 
@@ -295,7 +295,6 @@
             <dl class="sheet__meta">
               <div class="metarow"><dt>شماره</dt><dd data-out="invoice.number"></dd></div>
               <div class="metarow"><dt>تاریخ صدور</dt><dd data-out="invoice.dateText"></dd></div>
-              <div class="metarow" data-row="invoice.loadingDateText"><dt>بارگیری</dt><dd data-out="invoice.loadingDateText"></dd></div>
             </dl>
           </div>
         </header>
@@ -325,6 +324,7 @@
           <thead>
             <tr>
               <th class="c-idx">ردیف</th>
+              <th class="c-date" id="loadingDateHeading" hidden>تاریخ بارگیری</th>
               <th class="c-desc">شرح کالا</th>
               <th class="c-qty">وزن (کیلوگرم)</th>
               <th class="c-price">قیمت هر کیلو</th>
@@ -452,10 +452,10 @@
 
 <script src="assets/js/jalali.js"></script>
 <script src="assets/js/persian.js"></script>
-<script src="assets/js/quick-entry.js?v=7.2.0"></script>
-<script src="assets/js/app.js?v=7.2.0"></script>
-<script src="assets/js/export.js?v=7.2.0"></script>
-<script src="assets/js/pwa.js?v=7.2.0"></script>
-<script src="assets/js/ui.js?v=7.2.0"></script>
+<script src="assets/js/quick-entry.js?v=7.3.0"></script>
+<script src="assets/js/app.js?v=7.3.0"></script>
+<script src="assets/js/export.js?v=7.3.0"></script>
+<script src="assets/js/pwa.js?v=7.3.0"></script>
+<script src="assets/js/ui.js?v=7.3.0"></script>
 </body>
 </html>

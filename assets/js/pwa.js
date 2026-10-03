@@ -6,7 +6,7 @@
 
   /* ───────────────── اطلاع از نسخه تازه و به‌روزرسانی اختیاری ───────────────── */
 
-  var APP_VERSION = '7.2.0';
+  var APP_VERSION = '7.3.0';
   var SEEN_VERSION_KEY = 'shilan-invoice-app-version';
   var DISMISSED_VERSION_KEY = 'shilan-invoice-update-dismissed-version';
   var QUICK_DRAFT_KEY = 'shilan-invoice-update-quick-draft';

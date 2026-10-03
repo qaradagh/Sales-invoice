@@ -254,8 +254,11 @@
     setOut('invoice.number', Fa.toFaDigits(String(state.invoice.number || '').trim() || '—'));
     setOut('invoice.dateText', dateText(state.invoice.date, '.date-row', false));
     var loadingDateText = dateText(state.invoice.loadingDate, '#loadingDateRow', true);
-    setOut('invoice.loadingDateText', loadingDateText);
-    toggleRow('invoice.loadingDateText', !!loadingDateText);
+    var hasLoadingDate = !!loadingDateText;
+    $('#loadingDateHeading').hidden = !hasLoadingDate;
+    $('.itable').classList.toggle('has-loading-date', hasLoadingDate);
+    var loadingDateCell = hasLoadingDate
+      ? '<td class="c-date"><span class="ltr">' + escapeHtml(loadingDateText) + '</span></td>' : '';
 
     /* اقلام */
     var tbody = $('#outRows');
@@ -266,12 +269,13 @@
     });
 
     if (!visible.length) {
-      tbody.innerHTML = '<tr class="empty"><td colspan="5">هنوز قلمی ثبت نشده است — از پنل کناری ردیف اضافه کنید</td></tr>';
+      tbody.innerHTML = '<tr class="empty"><td colspan="' + (hasLoadingDate ? 6 : 5) + '">هنوز قلمی ثبت نشده است — از پنل کناری ردیف اضافه کنید</td></tr>';
     } else {
       visible.forEach(function (l, i) {
         var tr = document.createElement('tr');
         tr.innerHTML =
           '<td class="c-idx">' + Fa.toFaDigits(i + 1) + '</td>' +
+          loadingDateCell +
           '<td class="c-desc">' + escapeHtml(String(l.desc || '').trim() || '—') + '</td>' +
           '<td class="c-qty">' + Fa.formatQty(l.qty) + '<span class="unit">kg</span></td>' +
           '<td class="c-price">' + Fa.formatMoney(l.price) + '<span class="unit">' + cur + '</span></td>' +
@@ -284,6 +288,7 @@
         sumRow.className = 'sumline';
         sumRow.innerHTML =
           '<td class="c-idx"></td>' +
+          (hasLoadingDate ? '<td class="c-date"></td>' : '') +
           '<td class="c-desc"><b>جمع اقلام</b></td>' +
           '<td class="c-qty"><b>' + Fa.formatQty(t.totalQty) + '</b><span class="unit">kg</span></td>' +
           '<td class="c-price"></td>' +
